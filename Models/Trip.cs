@@ -18,7 +18,7 @@ namespace TravelAgencyProject.Models
         public string Country { get; set; } 
 
         [Required(ErrorMessage = "The description is required")]
-        [StringLength(2000,MinimumLength =20, ErrorMessage = "The name of the description can be between 20-2000 letters")]]
+        [StringLength(2000,MinimumLength =20, ErrorMessage = "The name of the description can be between 20-2000 letters")]
         public string Description { get; set; } 
 
         [Required(ErrorMessage = "The date is required")]
@@ -28,7 +28,7 @@ namespace TravelAgencyProject.Models
 
         [Required(ErrorMessage = "The date is required")]
         [DataType(DataType.Date)]
-        [Display(Name = "End date")]]
+        [Display(Name = "End date")]
         public DateTime EndDate { get; set; }
 
         [Required(ErrorMessage ="The price is required")]

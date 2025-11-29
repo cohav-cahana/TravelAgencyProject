@@ -23,7 +23,7 @@ namespace TravelAgencyProject.Models
         public DateTime BookingDate { get; set; } = DateTime.Now;
 
         [Required(ErrorMessage = "Please enter number of people")]
-        [Range(1, 10 ErrorMessage = "People count must be at least 1")]
+        [Range(1, 10 ,ErrorMessage = "People count must be at least 1")]
         public int PeopleCount { get; set; }
 
         [Required(ErrorMessage = "Please enter total price")]
@@ -36,20 +36,21 @@ namespace TravelAgencyProject.Models
 
         public DateTime? CancellationDate { get; set; }
         public string? transactionId { get; set; }
-        public tripStatus bookingStatus { get; set; } = tripStatus.Upcoming;
+        public TripStatus bookingStatus { get; set; } = TripStatus.Upcoming;
 
-        public enum PaymentStatus
-        {
-            Pending,
-            Completed,
-            Failed,
-            Refunded
-        }
-        public enum tripStatus
-        {
-            Upcoming,
-            Completed,
-            Canceled
-        }
+        
+    }
+    public enum PaymentStatus
+    {
+        Pending,
+        Completed,
+        Failed,
+        Refunded
+    }
+    public enum TripStatus
+    {
+        Upcoming,
+        Completed,
+        Canceled
     }
 }

@@ -19,13 +19,12 @@ namespace TravelAgencyProject.Models
         public DateTime PostedDate { get; set; }=DateTime.Now;
 
         [Required(ErrorMessage = "Please enter a rating")]
-        [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5 stars."))]
+        [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5 stars.")]
         public int Rating { get; set; } //Score between 1-5 stars.
 
         [Required(ErrorMessage = "Please enter your review comment")]
         [StringLength(500,ErrorMessage = "can be maximum 500 characters.")]
         public string Comment { get; set; } //The review text.
 
-        public DateTime PostedDate { get; set; } = DateTime.Now;
     }
 }
