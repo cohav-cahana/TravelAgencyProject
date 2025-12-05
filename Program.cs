@@ -1,7 +1,19 @@
+using System;
+using Microsoft.EntityFrameworkCore;
+using TravelAgencyProject.Data;
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add DbContext with SQL Server provider
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// (אופציונלי להמשך: כאן נוסיף גם את ה-Session בשביל העגלה)
 
 var app = builder.Build();
 
