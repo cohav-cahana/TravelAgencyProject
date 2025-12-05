@@ -1,5 +1,131 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model TravelAgencyProject.Models.Trip
+
 @{
+    ViewData["Title"] = "Create Trip";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Create New Travel Package</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" enctype="multipart/form-data">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <h4>🛑 Debug Errors:</h4>
+                        <ul>
+                            @foreach (var modelState in ViewData.ModelState.Values)
+                            {
+                                foreach (var error in modelState.Errors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                }
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Destination" class="form-label font-weight-bold">Destination</label>
+                        <input asp-for="Destination" class="form-control" placeholder="e.g. Paris" />
+                        <span asp-validation-for="Destination" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Country" class="form-label font-weight-bold">Country</label>
+                        <input asp-for="Country" class="form-control" placeholder="e.g. France" />
+                        <span asp-validation-for="Country" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label font-weight-bold">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Price" class="form-label font-weight-bold">Price ($)</label>
+                        <input asp-for="Price" class="form-control" type="number" step="0.01" />
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="SalePrice" class="form-label">Sale Price (Optional)</label>
+                        <input asp-for="SalePrice" class="form-control" type="number" step="0.01" />
+                        <span asp-validation-for="SalePrice" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="DiscountEndDate" class="form-label">Discount End Date</label>
+                        <input asp-for="DiscountEndDate" class="form-control" type="date" />
+                        <span asp-validation-for="DiscountEndDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Stock" class="form-label font-weight-bold">Available Rooms (Stock)</label>
+                        <input asp-for="Stock" class="form-control" type="number" />
+                        <span asp-validation-for="Stock" class="text-danger"></span>
+                    </div>
+                </div>
+
+ 
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StartDate" class="form-label font-weight-bold">Start Date</label>
+                        <input asp-for="StartDate" class="form-control" type="date" />
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EndDate" class="form-label font-weight-bold">End Date</label>
+                        <input asp-for="EndDate" class="form-control" type="date" />
+                        <span asp-validation-for="EndDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Category" class="form-label font-weight-bold">Category</label>
+                        <select asp-for="Category" class="form-control">
+                            <option value="">-- Select Category --</option>
+                            <option value="Family">Family</option>
+                            <option value="Honeymoon">Honeymoon</option>
+                            <option value="Adventure">Adventure</option>
+                            <option value="Cruise">Cruise</option>
+                            <option value="Luxury">Luxury</option>
+                        </select>
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="AgeLimitaion" class="form-label font-weight-bold">Age Limit (Years)</label>
+                        <input asp-for="AgeLimitaion" class="form-control" type="number" min="0" placeholder="e.g. 18" />
+                        <span asp-validation-for="AgeLimitaion" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ImageFile" class="form-label font-weight-bold">Trip Image</label>
+                        <input asp-for="ImageFile" class="form-control" type="file" accept="image/*" />
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">Create Trip</button>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg ms-2">Back to List</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

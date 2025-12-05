@@ -1,0 +1,1 @@
+﻿DELETE FROM Trips WHERE Price = 0 OR Destination IS NULL;
