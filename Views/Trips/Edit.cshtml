@@ -1,5 +1,126 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model TravelAgencyProject.Models.Trip
+
 @{
+    ViewData["Title"] = "Edit Trip";
+}
+
+<div class="container mt-4">
+    <h1>Edit Trip Package</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Edit" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="TripId" />
+                <input type="hidden" asp-for="ImageUrl" /> <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Destination" class="control-label fw-bold"></label>
+                        <input asp-for="Destination" class="form-control" />
+                        <span asp-validation-for="Destination" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Country" class="control-label fw-bold"></label>
+                        <input asp-for="Country" class="form-control" />
+                        <span asp-validation-for="Country" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="control-label fw-bold"></label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Category" class="control-label fw-bold"></label>
+                        <select asp-for="Category" class="form-select">
+                            <option value="">Select Category</option>
+                            <option value="Family">Family</option>
+                            <option value="Honeymoon">Honeymoon</option>
+                            <option value="Adventure">Adventure</option>
+                            <option value="Cruise">Cruise</option>
+                            <option value="Luxury">Luxury</option>
+                        </select>
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="AgeLimitaion" class="control-label fw-bold"></label>
+                        <input asp-for="AgeLimitaion" class="form-control" />
+                        <span asp-validation-for="AgeLimitaion" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="StartDate" class="control-label fw-bold"></label>
+                        <input asp-for="StartDate" class="form-control" type="date" />
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EndDate" class="control-label fw-bold"></label>
+                        <input asp-for="EndDate" class="form-control" type="date" />
+                        <span asp-validation-for="EndDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Stock" class="control-label fw-bold">Available Rooms</label>
+                    <input asp-for="Stock" class="form-control" />
+                    <span asp-validation-for="Stock" class="text-danger"></span>
+                </div>
+
+                <div class="card bg-light mb-3">
+                    <div class="card-header fw-bold">Pricing & Discounts</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Price" class="control-label fw-bold">Regular Price ($)</label>
+                            <input asp-for="Price" class="form-control" />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label asp-for="SalePrice" class="control-label fw-bold text-success">Sale Price ($)</label>
+                                <input asp-for="SalePrice" class="form-control" placeholder="Leave empty if no sale" />
+                                <span asp-validation-for="SalePrice" class="text-danger"></span>
+                                <small class="text-muted">Must be lower than regular price.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="DiscountEndDate" class="control-label fw-bold text-success">Sale Ends On</label>
+                                <input asp-for="DiscountEndDate" class="form-control" type="date" />
+                                <span asp-validation-for="DiscountEndDate" class="text-danger"></span>
+                                <small class="text-muted">Max 1 week from today.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="control-label fw-bold">Trip Image</label>
+                    <div class="mb-2">
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img src="@Model.ImageUrl" alt="Current Image" style="max-width: 200px; border-radius: 5px;" />
+                            <p class="text-muted small">Current Image</p>
+                        }
+                    </div>
+                    <label asp-for="ImageFile" class="control-label">Change Image (Optional)</label>
+                    <input asp-for="ImageFile" class="form-control" type="file" accept="image/*" />
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mt-4">
+                    <input type="submit" value="Save Changes" class="btn btn-primary" />
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

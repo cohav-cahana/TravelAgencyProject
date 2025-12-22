@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TravelAgencyProject.Data;
 using TravelAgencyProject.Models;
 
@@ -6,6 +8,7 @@ namespace TravelAgencyProject.Controllers
 {
     public class AccountController : Controller
     {
+
         // GET: /Account/Login
         public IActionResult Login()
         {
@@ -74,9 +77,24 @@ namespace TravelAgencyProject.Controllers
             }
             return View(user);
         }
+        // GET: Trips/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
 
-       
-        
+            // בדיקת הרשאת אדמין
+            if (HttpContext.Session.GetString("IsAdmin") != "true")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var trip = await _context.Trips.FindAsync(id);
+            if (trip == null) return NotFound();
+
+            return View(trip);
+        }
+
+
         private readonly AppDbContext _context;
 
         // Constructor that accepts the database 

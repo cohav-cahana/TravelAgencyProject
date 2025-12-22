@@ -52,7 +52,6 @@ namespace TravelAgencyProject.Models
         public string? ImageUrl { get; set; } // URL if we have an image.
 
         [NotMapped] // we don't want to store it in the database.
-        [Required(ErrorMessage = "Please upload an image")]
         [Display(Name = "Upload Image")] // what will be shown in the form.
         public IFormFile? ImageFile { get; set; } // the image file that the user uploads.
 
