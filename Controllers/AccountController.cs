@@ -37,11 +37,45 @@ namespace TravelAgencyProject.Controllers
             HttpContext.Session.Clear(); // Delete all session data
             return RedirectToAction("Index", "Home");
         }
-        // GET: /Account/Register *we do it after*
+        // GET: /Account/Register 
         public IActionResult Register()
         {
+            if (HttpContext.Session.GetString("Email") != null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             return View();
         }
+        // POST: /Account/Register
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register([Bind ("FirstName,LastName,Email,Password")] User user)
+            {
+            if (ModelState.IsValid)
+            {
+                // Check if email already exists
+                var existingUser = _context.Users.FirstOrDefault(u => u.Email == user.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "Email is already registered.");
+                    return View(user);
+                }
+                //defult values for sefaety
+                user.IsAdmin = false;
+                user.IsActive = true;
+
+                _context.Add(user);
+                await _context.SaveChangesAsync();
+
+                //Rembemer me 
+                HttpContext.Session.SetString("Email", user.Email);
+                HttpContext.Session.SetString("FirstName", user.FirstName);
+                return RedirectToAction("Index", "Home");
+            }
+            return View(user);
+        }
+
+       
         
         private readonly AppDbContext _context;
 
@@ -52,3 +86,4 @@ namespace TravelAgencyProject.Controllers
         }
     }
 }
+
