@@ -15,9 +15,21 @@ namespace TravelAgencyProject.Controllers
             _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
-        public IActionResult Index()
+        public IActionResult Index(string searchString)
         {
-            return View(_context.Trips.ToList());
+            var trips = from t in _context.Trips
+                        select t;
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                trips = trips.Where(s => s.Destination.Contains(searchString)
+                                      || s.Country.Contains(searchString)
+                                      || s.Category.Contains(searchString)
+                                      || s.Description.Contains(searchString));
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+            return View(trips.ToList());
         }
 
         // GET: Trips/Create
