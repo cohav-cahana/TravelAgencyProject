@@ -61,7 +61,7 @@ namespace TravelAgencyProject.Models
         [Required(ErrorMessage = "Age limit is required")]
         [Range(0, 120, ErrorMessage = "The age a positive number")]
         public int? AgeLimitaion { get; set; }
-
+        public bool IsVisible { get; set; } = true;
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (EndDate <= StartDate)

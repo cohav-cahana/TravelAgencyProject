@@ -15,10 +15,9 @@ namespace TravelAgencyProject.Controllers
             _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
-        public IActionResult Index(string searchString)
+        public IActionResult Index(string searchString, string category, string sortBy)
         {
-            var trips = from t in _context.Trips
-                        select t;
+            var trips = from t in _context.Trips select t;
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -28,7 +27,23 @@ namespace TravelAgencyProject.Controllers
                                       || s.Description.Contains(searchString));
             }
 
+            if (!string.IsNullOrEmpty(category))
+            {
+                trips = trips.Where(t => t.Category == category);
+            }
+
+            trips = sortBy switch
+            {
+                "price_asc" => trips.OrderBy(t => t.SalePrice ?? t.Price), // מהזול ליקר
+                "price_desc" => trips.OrderByDescending(t => t.SalePrice ?? t.Price), // מהיקר לזול
+                "destination" => trips.OrderBy(t => t.Destination), // לפי א'-ב' של יעד
+                _ => trips.OrderBy(t => t.StartDate) // ברירת מחדל: לפי תאריך יציאה
+            };
+
             ViewData["CurrentFilter"] = searchString;
+            ViewData["CurrentCategory"] = category;
+            ViewData["CurrentSort"] = sortBy;
+
             return View(trips.ToList());
         }
 
