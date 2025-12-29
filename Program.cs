@@ -50,9 +50,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseSession();// on evrey request, check for session cookie
 
 app.UseAuthorization();
-app.UseSession();// on evrey request, check for session cookie
 
 app.MapControllerRoute(
     name: "default",
