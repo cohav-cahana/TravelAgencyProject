@@ -33,5 +33,20 @@ namespace TravelAgencyProject.Controllers
 
             return View(myBookings);
         }
+        public async Task<IActionResult> AdminWaitingList()
+        {
+            if (HttpContext.Session.GetString("IsAdmin") != "true")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var list = await _context.WaitingLists
+                .Include(w => w.User)
+                .Include(w => w.Trip)
+                .OrderBy(w => w.RequestDate) // FIFO
+                .ToListAsync();
+
+            return View("~/Views/Admin/WaitingList.cshtml", list);
+        }
     }
 }

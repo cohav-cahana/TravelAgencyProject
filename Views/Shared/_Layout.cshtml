@@ -31,6 +31,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Booking" asp-action="Index">My Bookings</a>
                         </li>
+                        @if (Context.Session.GetString("IsAdmin") == "true")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" asp-controller="Booking" asp-action="AdminWaitingList">Waiting Lists</a>
+                            </li>
+                        }
                     </ul>
 
                     <partial name="_LoginPartial" />
