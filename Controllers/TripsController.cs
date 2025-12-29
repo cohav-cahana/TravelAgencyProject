@@ -238,31 +238,35 @@ namespace TravelAgencyProject.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessBooking(Booking booking)
         {
+            var trip = await _context.Trips.FindAsync(booking.TripId);
+
+            if (trip != null)
+            {
+                booking.TotalPrice = trip.Price * booking.PeopleCount;
+            }
+
             ModelState.Remove("User");
             ModelState.Remove("Trip");
+            ModelState.Remove("TotalPrice");
 
             if (ModelState.IsValid)
             {
-                var trip = await _context.Trips.FindAsync(booking.TripId);
-                if (trip != null)
-                {
-                    booking.TotalPrice = trip.Price * booking.PeopleCount;
-                }
-
                 booking.BookingDate = DateTime.Now;
-                booking.PaymentStatus = PaymentStatus.Completed; 
+                booking.PaymentStatus = PaymentStatus.Completed;
                 booking.bookingStatus = TripStatus.Upcoming;
 
                 _context.Bookings.Add(booking);
                 await _context.SaveChangesAsync();
 
-                TempData["Message"] = "Booking confirmed! Enjoy your trip to " + trip?.Destination;
-                return RedirectToAction(nameof(Index));
+                booking.Trip = trip;
+                return View("~/Views/Booking/Confirmation.cshtml", booking);
             }
 
-            return View("Checkout", booking);
+            booking.Trip = trip;
+            return View("~/Views/Booking/Checkout.cshtml", booking);
         }
 
     }

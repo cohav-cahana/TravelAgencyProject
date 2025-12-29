@@ -1,5 +1,21 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model TravelAgencyProject.Models.Booking
+
+<div class="container mt-5 text-center">
+    <div class="card shadow p-5">
+        <h1 class="display-4 text-success">Booking Confirmed!</h1>
+        <p class="lead">Thank you for booking with us. Your reservation is complete.</p>
+        <hr />
+        <div class="row text-start justify-content-center">
+            <div class="col-md-6">
+                <h4>Reservation Summary</h4>
+                <p><strong>Destination:</strong> @Model.Trip?.Destination</p>
+                <p><strong>Travelers:</strong> @Model.PeopleCount</p>
+                <p><strong>Total Paid:</strong> $@Model.TotalPrice</p>
+                <p><strong>Date:</strong> @Model.BookingDate.ToShortDateString()</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a asp-action="Index" asp-controller="Trips" class="btn btn-primary btn-lg">Back to Trips</a>
+        </div>
+    </div>
+</div>
