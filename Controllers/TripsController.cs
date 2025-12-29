@@ -254,11 +254,24 @@ namespace TravelAgencyProject.Controllers
 
             if (ModelState.IsValid)
             {
+                if (trip != null)
+                {
+                    if (trip.Stock <= 0)
+                    {
+                        TempData["Error"] = "Sorry, this trip is now fully booked.";
+                        return RedirectToAction("Index");
+                    }
+
+                    trip.Stock -= 1;
+                    _context.Update(trip);
+                }
+
                 booking.BookingDate = DateTime.Now;
                 booking.PaymentStatus = PaymentStatus.Completed;
                 booking.bookingStatus = TripStatus.Upcoming;
 
                 _context.Bookings.Add(booking);
+
                 await _context.SaveChangesAsync();
 
                 booking.Trip = trip;
@@ -268,6 +281,5 @@ namespace TravelAgencyProject.Controllers
             booking.Trip = trip;
             return View("~/Views/Booking/Checkout.cshtml", booking);
         }
-
     }
 }
