@@ -1,13 +1,13 @@
 ﻿@model IEnumerable<TravelAgencyProject.Models.Booking>
 
-@{
+    @{
     ViewData["Title"] = "My Bookings";
-}
+    }
 
-<div class="container mt-5">
-    <h2 class="mb-4"><i class="bi bi-suit-case-lg"></i> My Bookings</h2>
+    <div class="container mt-5">
+        <h2 class="mb-4"><i class="bi bi-suit-case-lg"></i> My Bookings</h2>
 
-    @if (!Model.Any())
+        @if (!Model.Any())
     {
         <div class="alert alert-info shadow-sm">
             <p class="mb-0">You haven't booked any trips yet. <a asp-controller="Trips" asp-action="Index" class="alert-link">Explore our trips here!</a></p>
@@ -30,26 +30,48 @@
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr>
-                            <td>
-                                <strong>@item.Trip.Destination</strong><br />
-                                <small class="text-muted">@item.Trip.Country</small>
-                            </td>
-                            <td>@item.BookingDate.ToShortDateString()</td>
-                            <td>@item.PeopleCount</td>
-                            <td class="fw-bold">$@item.TotalPrice</td>
-                            <td>
-                                <span class="badge @(item.bookingStatus == TravelAgencyProject.Models.TripStatus.Upcoming ? "bg-success" : "bg-secondary")">
-                                    @item.bookingStatus
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-outline-danger btn-sm" disabled>Cancel</button>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td>
+                            <strong>@item.Trip?.Destination</strong><br />
+                            <small class="text-muted">@item.Trip?.Country</small>
+                        </td>
+                        <td>@item.BookingDate.ToShortDateString()</td>
+                        <td>@item.PeopleCount</td>
+                        <td class="fw-bold">$@item.TotalPrice</td>
+                        <td>
+                            @if (item.bookingStatus == TravelAgencyProject.Models.TripStatus.Upcoming)
+                                {
+                            <span class="badge bg-success">Upcoming</span>
+                                }
+                                else if (item.bookingStatus == TravelAgencyProject.Models.TripStatus.Cancelled)
+                                {
+                            <span class="badge bg-danger">Cancelled</span>
+                                }
+                                else
+                                {
+                            <span class="badge bg-secondary">@item.bookingStatus</span>
+                                }
+                        </td>
+                        <td>
+                            @if (item.bookingStatus != TravelAgencyProject.Models.TripStatus.Cancelled)
+                                {
+                            <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post"
+                                  onsubmit="return confirm('Are you sure you want to cancel this booking? The seats will be returned to stock.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </button>
+                            </form>
+                                }
+                                else
+                                {
+                            <button class="btn btn-sm btn-light" disabled>No actions</button>
+                                }
+                        </td>
+                    </tr>
                     }
                 </tbody>
             </table>
         </div>
     }
-</div>
+    </div>

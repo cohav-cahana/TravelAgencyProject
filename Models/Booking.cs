@@ -51,6 +51,6 @@ namespace TravelAgencyProject.Models
     {
         Upcoming,
         Completed,
-        Canceled
+        Cancelled
     }
 }

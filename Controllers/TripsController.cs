@@ -281,5 +281,28 @@ namespace TravelAgencyProject.Controllers
             booking.Trip = trip;
             return View("~/Views/Booking/Checkout.cshtml", booking);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelBooking(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Trip)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking != null)
+            {
+                if (booking.Trip != null)
+                {
+                    booking.Trip.Stock += booking.PeopleCount;
+                    _context.Update(booking.Trip);
+                }
+
+                booking.bookingStatus = TripStatus.Cancelled;
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Index", "Booking");
+        }
     }
 }
