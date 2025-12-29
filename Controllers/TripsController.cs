@@ -215,5 +215,55 @@ namespace TravelAgencyProject.Controllers
             return View(trip);
         }
 
+        public async Task<IActionResult> Checkout(int tripId)
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var trip = await _context.Trips.FindAsync(tripId);
+            if (trip == null) return NotFound();
+            
+            var booking = new Booking
+            {
+                TripId = trip.TripId,
+                Trip = trip,
+                UserId = int.Parse(userIdString),
+                TotalPrice = trip.Price 
+            };
+
+            return View("~/Views/Booking/Checkout.cshtml", booking);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessBooking(Booking booking)
+        {
+            ModelState.Remove("User");
+            ModelState.Remove("Trip");
+
+            if (ModelState.IsValid)
+            {
+                var trip = await _context.Trips.FindAsync(booking.TripId);
+                if (trip != null)
+                {
+                    booking.TotalPrice = trip.Price * booking.PeopleCount;
+                }
+
+                booking.BookingDate = DateTime.Now;
+                booking.PaymentStatus = PaymentStatus.Completed; 
+                booking.bookingStatus = TripStatus.Upcoming;
+
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                TempData["Message"] = "Booking confirmed! Enjoy your trip to " + trip?.Destination;
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View("Checkout", booking);
+        }
+
     }
 }

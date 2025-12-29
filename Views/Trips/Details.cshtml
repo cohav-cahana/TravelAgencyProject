@@ -6,7 +6,7 @@
             <div class="col-md-6">
                 @if (!string.IsNullOrEmpty(Model.ImageUrl))
                 {
-                    <img src="@Model.ImageUrl" class="img-fluid rounded-start h-100" style="object-fit: cover; min-height: 400px; width: 100%;" alt="@Model.Destination" />
+                <img src="@Model.ImageUrl" class="img-fluid rounded-start h-100" style="object-fit: cover; min-height: 400px; width: 100%;" alt="@Model.Destination" />
                 }
             </div>
 
@@ -35,17 +35,14 @@
 
                         @if (Context.Session.GetString("IsAdmin") != "true")
                         {
-                            <form asp-action="BookTrip" method="post" class="m-0">
-                                <input type="hidden" name="tripId" value="@Model.TripId" />
-                                <button type="submit" class="btn btn-success btn-lg shadow fw-bold">
-                                    BOOK NOW
-                                </button>
-                            </form>
+                        <a asp-action="Checkout" asp-route-tripId="@Model.TripId" class="btn btn-success btn-lg shadow fw-bold">
+                            ✈️ BOOK NOW
+                        </a>
                         }
 
                         @if (Context.Session.GetString("IsAdmin") == "true")
                         {
-                            <a asp-action="Edit" asp-route-id="@Model.TripId" class="btn btn-warning btn-lg">Edit Trip</a>
+                        <a asp-action="Edit" asp-route-id="@Model.TripId" class="btn btn-warning btn-lg">Edit Trip</a>
                         }
                     </div>
                 </div>

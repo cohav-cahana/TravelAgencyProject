@@ -23,6 +23,7 @@ namespace TravelAgencyProject.Controllers
                 var user = _context.Users.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
                 if (user != null) // User found, so we save his info in session
                 {
+                    HttpContext.Session.SetString("UserId", user.UserId.ToString());
                     HttpContext.Session.SetString("Email", user.Email);
                     HttpContext.Session.SetString("FirstName", user.FirstName);
                     if (user.IsAdmin) // If the user is admin, we save that info in session too
@@ -71,6 +72,7 @@ namespace TravelAgencyProject.Controllers
                 await _context.SaveChangesAsync();
 
                 //Rembemer me 
+                HttpContext.Session.SetString("UserId", user.UserId.ToString());
                 HttpContext.Session.SetString("Email", user.Email);
                 HttpContext.Session.SetString("FirstName", user.FirstName);
                 return RedirectToAction("Index", "Home");
