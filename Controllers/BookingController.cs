@@ -48,5 +48,30 @@ namespace TravelAgencyProject.Controllers
 
             return View("~/Views/Admin/WaitingList.cshtml", list);
         }
+        [HttpPost]
+        public async Task<IActionResult> NotifyUser(int id)
+        {
+            var entry = await _context.WaitingLists.FindAsync(id);
+            if (entry != null)
+            {
+                entry.HasBeenNotified = true;
+                await _context.SaveChangesAsync();
+                TempData["AdminMessage"] = "The customer has been marked as notified.";
+            }
+            return RedirectToAction(nameof(AdminWaitingList));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveFromWaitingList(int id)
+        {
+            var entry = await _context.WaitingLists.FindAsync(id);
+            if (entry != null)
+            {
+                _context.WaitingLists.Remove(entry);
+                await _context.SaveChangesAsync();
+                TempData["AdminMessage"] = "The user was removed from the waiting list.";
+            }
+            return RedirectToAction(nameof(AdminWaitingList));
+        }
     }
 }

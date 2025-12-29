@@ -225,7 +225,11 @@ namespace TravelAgencyProject.Controllers
 
             var trip = await _context.Trips.FindAsync(tripId);
             if (trip == null) return NotFound();
-            
+
+            if (trip.Stock <= 0)
+            {
+                return View("~/Views/Booking/WaitingListNotice.cshtml", trip);
+            }
             var booking = new Booking
             {
                 TripId = trip.TripId,
@@ -303,6 +307,27 @@ namespace TravelAgencyProject.Controllers
             }
 
             return RedirectToAction("Index", "Booking");
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> JoinWaitingList(int tripId)
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account");
+
+            var entry = new WaitingList
+            {
+                TripId = tripId,
+                UserId = int.Parse(userIdString),
+                RequestDate = DateTime.Now
+            };
+
+            _context.WaitingLists.Add(entry);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "You have been successfully added to the waiting list!";
+
+            return RedirectToAction("Index", "Trips");
         }
     }
 }
