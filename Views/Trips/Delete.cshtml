@@ -33,7 +33,7 @@
         </div>
         <div class="card-footer text-center">
             <form asp-action="Delete">
-                <input type="hidden" asp-for="TripId" />
+                <input type="hidden" name="id" asp-for="TripId" />
 
                 <button type="submit" class="btn btn-danger btn-lg">Yes, Delete Trip</button>
                 <a asp-action="Index" class="btn btn-secondary btn-lg">Cancel</a>

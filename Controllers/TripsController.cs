@@ -40,6 +40,7 @@ namespace TravelAgencyProject.Controllers
             ModelState.Remove("ImageUrl");
             if (trip.ImageFile != null) // If the user uploaded an image
             {
+
                 // Save the image to wwwroot/images/trips
                 string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "trips");
                 if (!Directory.Exists(folder)) // Create the folder if it doesn't exist
@@ -64,7 +65,7 @@ namespace TravelAgencyProject.Controllers
             ModelState.Remove("ImageUrl");// We will set it in the code below
             if (string.IsNullOrEmpty(trip.ImageUrl) && trip.ImageFile == null)
             {
-                ModelState.AddModelError("ImageFile", "Please upload an image.");
+         //       ModelState.AddModelError("ImageFile", "Please upload an image.");
             }
             if (ModelState.IsValid)
             {
@@ -98,6 +99,17 @@ namespace TravelAgencyProject.Controllers
             {
                 return NotFound();
             }
+
+            return View(trip);
+        }
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var trip = await _context.Trips
+                .FirstOrDefaultAsync(m => m.TripId == id);
+            if (trip == null) return NotFound();
 
             return View(trip);
         }
