@@ -98,6 +98,19 @@ namespace TravelAgencyProject.Controllers
             return View(trip);
         }
 
+        [HttpPost]
+        public IActionResult BookTrip(int tripId)
+        {
+            if (HttpContext.Session.GetString("Username") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            TempData["Message"] = "Successfully selected! We will contact you soon.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();

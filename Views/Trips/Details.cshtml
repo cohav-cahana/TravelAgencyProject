@@ -1,9 +1,5 @@
 ﻿@model TravelAgencyProject.Models.Trip
 
-@{
-    ViewData["Title"] = "Trip Details";
-}
-
 <div class="container mt-5">
     <div class="card shadow-lg border-0">
         <div class="row g-0">
@@ -12,10 +8,6 @@
                 {
                     <img src="@Model.ImageUrl" class="img-fluid rounded-start h-100" style="object-fit: cover; min-height: 400px; width: 100%;" alt="@Model.Destination" />
                 }
-                else
-                {
-                    <img src="/images/trips/default.png" class="img-fluid rounded-start h-100" style="object-fit: cover; min-height: 400px; width: 100%;" alt="Default Image" />
-                }
             </div>
 
             <div class="col-md-6">
@@ -23,16 +15,14 @@
                     <h2 class="card-title fw-bold text-primary">@Model.Destination, @Model.Country</h2>
                     <span class="badge bg-info text-dark mb-3">@Model.Category</span>
 
-                    <p class="card-text text-muted" style="font-size: 1.1rem; line-height: 1.6;">
-                        @Model.Description
-                    </p>
+                    <p class="card-text text-muted">@Model.Description</p>
 
                     <hr />
 
                     <div class="row mt-4">
                         <div class="col-6">
-                            <h5><strong>📅 Start Date:</strong></h5>
-                            <p>@Model.StartDate.ToShortDateString()</p>
+                            <h5><strong>📅 Dates:</strong></h5>
+                            <p>@Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
                         </div>
                         <div class="col-6 text-end">
                             <h5><strong>💰 Price:</strong></h5>
@@ -40,10 +30,19 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 d-flex gap-2">
+                    <div class="mt-5 d-flex gap-2 align-items-center">
                         <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Back to List</a>
 
-                        @* כפתור עריכה שיופיע רק לאדמין *@
+                        @if (Context.Session.GetString("IsAdmin") != "true")
+                        {
+                            <form asp-action="BookTrip" method="post" class="m-0">
+                                <input type="hidden" name="tripId" value="@Model.TripId" />
+                                <button type="submit" class="btn btn-success btn-lg shadow fw-bold">
+                                    BOOK NOW
+                                </button>
+                            </form>
+                        }
+
                         @if (Context.Session.GetString("IsAdmin") == "true")
                         {
                             <a asp-action="Edit" asp-route-id="@Model.TripId" class="btn btn-warning btn-lg">Edit Trip</a>
