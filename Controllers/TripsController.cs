@@ -86,11 +86,6 @@ namespace TravelAgencyProject.Controllers
             {
                 return NotFound();
             }
-            // Only admin acn delete trips
-            if (HttpContext.Session.GetString("IsAdmin") != "true")
-            {
-                return RedirectToAction("Login", "Account");
-            }
 
             var trip = await _context.Trips
                 .FirstOrDefaultAsync(m => m.TripId == id);
