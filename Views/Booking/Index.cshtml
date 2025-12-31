@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "My Bookings";
-    // שליפת טיולי העבר מה-ViewBag
     var pastBookings = ViewBag.PastBookings as List<TravelAgencyProject.Models.Booking>;
 }
 
@@ -44,20 +43,29 @@
                                 <span class="badge bg-success">Upcoming</span>
                             </td>
                             <td>
-                                @if (item.bookingStatus != TravelAgencyProject.Models.TripStatus.Cancelled)
-                                {
-                                    <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post"
-                                          onsubmit="return confirm('Are you sure you want to cancel this booking? The seats will be returned to stock.');">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                                            <i class="bi bi-x-circle"></i> Cancel
+                                <div class="d-flex gap-2">
+                                    @if (item.bookingStatus != TravelAgencyProject.Models.TripStatus.Cancelled)
+                                    {
+                                        @* --- PDF Download Button --- *@
+                                        <button onclick="downloadBookingPDF('@item.BookingId', '@item.Trip?.Destination', '@item.Trip?.Country', '@item.BookingDate.ToShortDateString()', '@item.PeopleCount', '@item.TotalPrice')"
+                                                class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-file-earmark-pdf"></i> Receipt
                                         </button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-sm btn-light" disabled>Cancelled</button>
-                                }
+
+                                        @* --- Cancel Button --- *@
+                                        <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post"
+                                              onsubmit="return confirm('Are you sure you want to cancel this booking? The seats will be returned to stock.');" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-x-circle"></i> Cancel
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-light" disabled>Cancelled</button>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -105,3 +113,60 @@
         </div>
     }
 </div>
+
+@section Scripts {
+@* Load html2pdf library *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        function downloadBookingPDF(id, dest, country, date, people, price) {
+            // Create a styled HTML element for the PDF content
+            const element = document.createElement('div');
+            element.innerHTML = `
+                <div style="padding: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #0d6efd; margin-bottom: 5px;">TravelAgency Service</h1>
+                        <p style="color: #6c757d;">Official Booking Receipt</p>
+                    </div>
+                    <hr style="border: 0; border-top: 2px solid #eee; margin-bottom: 30px;">
+
+                    <h3 style="color: #198754; margin-bottom: 20px;">Booking Details - Order #${id}</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                        <tr>
+                            <td style="padding: 12px 0; font-weight: bold; border-bottom: 1px solid #eee;">Destination:</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${dest}, ${country}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0; font-weight: bold; border-bottom: 1px solid #eee;">Booking Date:</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${date}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0; font-weight: bold; border-bottom: 1px solid #eee;">Number of Travelers:</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${people}</td>
+                        </tr>
+                        <tr style="background-color: #f8f9fa;">
+                            <td style="padding: 15px 10px; font-weight: bold; color: #0d6efd; font-size: 1.2em;">Total Paid:</td>
+                            <td style="padding: 15px 10px; color: #0d6efd; font-size: 1.2em; font-weight: bold; text-align: right;">$${price}</td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top: 50px; font-size: 0.9em; color: #777; text-align: center; border-top: 1px solid #eee; pt-20">
+                        <p>Thank you for choosing TravelAgency for your journey!</p>
+                        <p>If you have any questions, please contact our support.</p>
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin: 10,
+                filename: 'TravelAgency_Receipt_' + id + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Process and Save the PDF
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+}
