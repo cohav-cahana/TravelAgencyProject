@@ -76,7 +76,7 @@
                             <span class="badge bg-primary position-absolute top-0 end-0 m-3 shadow">@item.Category</span>
 
                             <form asp-action="AddToCart" asp-route-id="@item.TripId" method="post">
-                                <button type="submit" class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 m-2 shadow-lg add-btn">
+                                <button type="submit" class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 m-2 shadow-lg add-btn" style="z-index: 100;">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </form>

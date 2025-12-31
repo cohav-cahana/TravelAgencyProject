@@ -86,17 +86,17 @@ namespace TravelAgencyProject.Controllers
                 // Set the ImageUrl to the relative path
                 trip.ImageUrl = "/images/trips/" + fileName;
             }
-           
+
 
 
             ModelState.Remove("ImageUrl");// We will set it in the code below
             if (string.IsNullOrEmpty(trip.ImageUrl) && trip.ImageFile == null)
             {
-         //       ModelState.AddModelError("ImageFile", "Please upload an image.");
+                //       ModelState.AddModelError("ImageFile", "Please upload an image.");
             }
             if (ModelState.IsValid)
             {
-               
+
                 //Add and save the trip to the database
                 _context.Add(trip);
                 await _context.SaveChangesAsync();
@@ -250,7 +250,7 @@ namespace TravelAgencyProject.Controllers
                 TripId = trip.TripId,
                 Trip = trip,
                 UserId = int.Parse(userIdString),
-                TotalPrice = trip.Price 
+                TotalPrice = trip.Price
             };
 
             return View("~/Views/Booking/Checkout.cshtml", booking);
@@ -346,19 +346,61 @@ namespace TravelAgencyProject.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddToCart(int id)
+        public async Task<IActionResult> AddToCart(int id)
         {
+            // Get current cart from session
             var cartJson = HttpContext.Session.GetString("Cart");
             List<int> cart = string.IsNullOrEmpty(cartJson)
                 ? new List<int>()
                 : System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
 
+            // Get UserId from session to check for active bookings in DB
+            var userIdString = HttpContext.Session.GetString("UserId");
+            int activeBookingsCount = 0;
+
+            if (!string.IsNullOrEmpty(userIdString))
+            {
+                int userId = int.Parse(userIdString);
+                // Count existing bookings with 'Upcoming' status for this user
+                activeBookingsCount = await _context.Bookings
+                    .CountAsync(b => b.UserId == userId && b.bookingStatus == TripStatus.Upcoming);
+            }
+
+            // Limit check: Total active trips (bookings + cart) cannot exceed 3
+            if (activeBookingsCount + cart.Count >= 3)
+            {
+                // Display error message and stop the process
+                TempData["Error"] = "You can only have up to 3 active trips in total (including your cart and bookings).";
+                return RedirectToAction("Index");
+            }
+
+            // Add trip ID to the cart list
             cart.Add(id);
 
+            // Save updated cart back to session
             HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
 
             TempData["Message"] = "Trip added to your cart!";
             return RedirectToAction("Index");
+        }
+
+
+        public async Task<IActionResult> GetCartSummary()
+        {
+            var cartJson = HttpContext.Session.GetString("Cart");
+            if (string.IsNullOrEmpty(cartJson))
+            {
+                return PartialView("_CartSummaryPartial", new List<Trip>());
+            }
+
+            List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
+            // Fetch details for the trips in the cart
+            var tripsInCart = await _context.Trips
+                .Where(t => tripIds.Contains(t.TripId))
+                .ToListAsync();
+
+            return PartialView("_CartSummaryPartial", tripsInCart);
         }
     }
 }

@@ -33,7 +33,7 @@
                         </li>
 
                         <li class="nav-item ms-lg-2">
-                            <a class="nav-link text-dark position-relative p-2" asp-controller="Trips" asp-action="Cart">
+                            <a class="nav-link text-dark position-relative p-2" href="#" data-bs-toggle="modal" data-bs-target="#cartModal" id="cartIcon">
                                 <i class="bi bi-cart3 fs-5"></i>
                                 @{
                                     var cartJson = Context.Session.GetString("Cart");
@@ -42,7 +42,7 @@
                                 }
                                 @if (count > 0)
                                 {
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadge">
                                         @count
                                     </span>
                                 }
@@ -77,10 +77,49 @@
             &copy; 2025 - TravelAgencyProject - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cartModalLabel"><i class="bi bi-cart3"></i> Your Cart Summary</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="cartModalBody">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var cartIcon = document.getElementById('cartIcon');
+            if(cartIcon) {
+                cartIcon.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    // Load the content from the controller
+                    fetch('/Trips/GetCartSummary')
+                        .then(response => response.text())
+                        .then(html => {
+                            document.getElementById('cartModalBody').innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            document.getElementById('cartModalBody').innerHTML = "Error loading cart.";
+                        });
+                });
+            }
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
