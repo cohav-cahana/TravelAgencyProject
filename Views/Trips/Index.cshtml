@@ -70,19 +70,25 @@
             {
                 <div class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm hover-effect border-0 overflow-hidden">
+
                         <div class="position-relative">
                             <img src="@item.ImageUrl" class="card-img-top" alt="@item.Destination" style="height: 220px; object-fit: cover;">
                             <span class="badge bg-primary position-absolute top-0 end-0 m-3 shadow">@item.Category</span>
+
+                            <form asp-action="AddToCart" asp-route-id="@item.TripId" method="post">
+                                <button type="submit" class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 m-2 shadow-lg add-btn">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </form>
                         </div>
 
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title fw-bold mb-1">@item.Destination</h5>
                             <p class="text-muted small mb-2"><i class="bi bi-geo-alt-fill"></i> @item.Country</p>
-
                             <p class="card-text text-muted text-truncate" style="max-height: 3em;">@item.Description</p>
 
-                            <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         @if (item.SalePrice != null && item.DiscountEndDate >= DateTime.Now)
                                         {
@@ -142,4 +148,20 @@
         border-radius: 8px;
         padding: 10px 20px;
     }
+
+    .add-btn {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, background-color 0.2s;
+        z-index: 10;
+        border: 2px solid white;
+    }
+
+        .add-btn:hover {
+            transform: scale(1.15);
+            background-color: #0056b3;
+        }
 </style>

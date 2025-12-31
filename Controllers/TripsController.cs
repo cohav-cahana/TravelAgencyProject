@@ -344,5 +344,21 @@ namespace TravelAgencyProject.Controllers
 
             return RedirectToAction("Index", "Trips");
         }
+
+        [HttpPost]
+        public IActionResult AddToCart(int id)
+        {
+            var cartJson = HttpContext.Session.GetString("Cart");
+            List<int> cart = string.IsNullOrEmpty(cartJson)
+                ? new List<int>()
+                : System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
+            cart.Add(id);
+
+            HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
+
+            TempData["Message"] = "Trip added to your cart!";
+            return RedirectToAction("Index");
+        }
     }
 }
