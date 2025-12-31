@@ -418,5 +418,76 @@ namespace TravelAgencyProject.Controllers
 
             return PartialView("_CartSummaryPartial", tripsInCart);
         }
+        public async Task<IActionResult> CartCheckout()
+        {
+            // 1. Check if user is logged in
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account");
+
+            // 2. Get trip IDs from session cart
+            var cartJson = HttpContext.Session.GetString("Cart");
+            if (string.IsNullOrEmpty(cartJson)) return RedirectToAction("Index");
+
+            List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
+            // 3. Fetch trip details from DB
+            var tripsInCart = await _context.Trips
+                .Where(t => tripIds.Contains(t.TripId))
+                .ToListAsync();
+
+            if (!tripsInCart.Any()) return RedirectToAction("Index");
+
+            // 4. Return the checkout view with the list of trips
+            return View("~/Views/Booking/CartCheckout.cshtml", tripsInCart);
+        }
+        // Action to process the multiple bookings from the cart
+        [HttpPost]
+        public async Task<IActionResult> ProcessCartBooking(int peopleCount)
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            var cartJson = HttpContext.Session.GetString("Cart");
+
+            if (string.IsNullOrEmpty(userIdString) || string.IsNullOrEmpty(cartJson))
+            {
+                return RedirectToAction("Index");
+            }
+
+            int userId = int.Parse(userIdString);
+            List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
+            // Loop through each trip in the cart and create a Booking entry
+            foreach (var id in tripIds)
+            {
+                var trip = await _context.Trips.FindAsync(id);
+
+                // Ensure trip exists and has available stock
+                if (trip != null && trip.Stock > 0)
+                {
+                    var booking = new Booking
+                    {
+                        UserId = userId,
+                        TripId = id,
+                        PeopleCount = peopleCount,
+                        TotalPrice = (trip.SalePrice ?? trip.Price) * peopleCount,
+                        BookingDate = DateTime.Now,
+                        PaymentStatus = PaymentStatus.Completed,
+                        bookingStatus = TripStatus.Upcoming
+                    };
+
+                    // Reduce the stock count in the database
+                    trip.Stock -= 1;
+                    _context.Bookings.Add(booking);
+                }
+            }
+
+            // Save all changes to the database
+            await _context.SaveChangesAsync();
+
+            // Clear the shopping cart session after successful payment
+            HttpContext.Session.Remove("Cart");
+
+            TempData["Message"] = "Thank you! All your trips have been successfully booked.";
+            return RedirectToAction("Index", "Booking");
+        }
     }
 }

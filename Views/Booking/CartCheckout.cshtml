@@ -1,0 +1,106 @@
+﻿@model IEnumerable<TravelAgencyProject.Models.Trip>
+
+@{
+    ViewData["Title"] = "Cart Checkout";
+    // Summing up prices for all trips in the cart
+    decimal totalPricePerPerson = Model.Sum(t => t.SalePrice ?? t.Price);
+}
+
+<div class="container py-5">
+    <div class="row g-5">
+        <div class="col-md-5 col-lg-4 order-md-last">
+            <h4 class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-primary fw-bold">Order Summary</span>
+                <span class="badge bg-primary rounded-pill">@Model.Count()</span>
+            </h4>
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <ul class="list-group list-group-flush">
+                    @foreach (var trip in Model)
+                    {
+                        <li class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="my-0 fw-bold">@trip.Destination</h6>
+                                    <small class="text-muted">@trip.Country | @trip.Category</small>
+                                </div>
+                                <span class="text-muted">$@(trip.SalePrice ?? trip.Price)</span>
+                            </div>
+                        </li>
+                    }
+
+                    <li class="list-group-item p-3 bg-light">
+                        <div class="d-flex justify-content-between small fw-bold">
+                            <span>Travelers</span>
+                            <span id="summary-people">1</span>
+                        </div>
+                    </li>
+                    <li class="list-group-item p-3 border-top border-primary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold fs-5">Total</span>
+                            <strong class="text-primary fs-4" id="summary-total">$@totalPricePerPerson.ToString("N0")</strong>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-7 col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-lg-5">
+                <h2 class="mb-4 fw-bold">Complete Your Booking</h2>
+
+                <form asp-controller="Trips" asp-action="ProcessCartBooking" method="post">
+                    <div class="section-header mb-4">
+                        <h5 class="fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i> Travelers</h5>
+                    </div>
+
+                    <div class="p-4 bg-light rounded-4 border mb-5">
+                        <label class="form-label fw-bold text-dark mb-3">How many people are joining for all trips?</label>
+                        <div class="input-group input-group-lg shadow-sm" style="max-width: 300px;">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-person-plus text-primary"></i>
+                            </span>
+                            <input type="number" name="peopleCount" id="peopleInput"
+                                   class="form-control border-start-0 fw-bold"
+                                   min="1" max="10" value="1" required />
+                        </div>
+                    </div>
+
+                    <div class="section-header mb-4">
+                        <h5 class="fw-bold"><i class="bi bi-credit-card-2-back-fill me-2 text-primary"></i> Payment</h5>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <input type="text" class="form-control form-control-lg" placeholder="Card Number" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control form-control-lg" placeholder="MM/YY" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="password" class="form-control form-control-lg" placeholder="CVV" required maxlength="3">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg w-100 mt-4 py-3 fw-bold rounded-pill" type="submit">
+                        CONFIRM & PAY NOW
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const peopleInput = document.getElementById('peopleInput');
+        const summaryPeople = document.getElementById('summary-people');
+        const summaryTotal = document.getElementById('summary-total');
+        const pricePerPerson = @totalPricePerPerson;
+
+        // JS Logic to update total price dynamically
+        peopleInput.addEventListener('input', function() {
+            const count = Math.max(1, this.value);
+            summaryPeople.innerText = count;
+            summaryTotal.innerText = '$' + (count * pricePerPerson).toLocaleString();
+        });
+    </script>
+}

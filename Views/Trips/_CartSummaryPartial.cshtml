@@ -28,6 +28,6 @@ else
             <span>Total:</span>
             <span>@Model.Sum(t => t.SalePrice ?? t.Price).ToString("C")</span>
         </div>
-        <a asp-controller="Booking" asp-action="Cart" class="btn btn-primary">Check Out Now</a>
-    </div>
+        <a asp-controller="Trips" asp-action="CartCheckout" class="btn btn-primary">Check Out Now</a>
+    </div>    
 }
