@@ -24,14 +24,18 @@ namespace TravelAgencyProject.Controllers
 
             int userId = int.Parse(userIdString);
 
-            // שליפת כל ההזמנות השייכות למשתמש הזה, כולל פרטי הטיול
-            var myBookings = await _context.Bookings
+            var allBookings = await _context.Bookings
                 .Include(b => b.Trip)
                 .Where(b => b.UserId == userId)
-                .OrderByDescending(b => b.BookingDate)
+                .OrderByDescending(b => b.Trip.StartDate)
                 .ToListAsync();
 
-            return View(myBookings);
+            var upcomingBookings = allBookings.Where(b => b.Trip.StartDate >= DateTime.Today).ToList();
+            var pastBookings = allBookings.Where(b => b.Trip.StartDate < DateTime.Today).ToList();
+
+            ViewBag.PastBookings = pastBookings;
+
+            return View(upcomingBookings);
         }
         public async Task<IActionResult> AdminWaitingList()
         {
@@ -73,5 +77,6 @@ namespace TravelAgencyProject.Controllers
             }
             return RedirectToAction(nameof(AdminWaitingList));
         }
+
     }
 }
