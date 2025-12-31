@@ -383,6 +383,22 @@ namespace TravelAgencyProject.Controllers
             TempData["Message"] = "Trip added to your cart!";
             return RedirectToAction("Index");
         }
+        [HttpPost]
+        public IActionResult RemoveFromCart(int id)
+        {
+            var cartJson = HttpContext.Session.GetString("Cart");
+            if (!string.IsNullOrEmpty(cartJson))
+            {
+                var cart = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
+                // Remove the first instance of this trip ID
+                cart.Remove(id);
+
+                HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
+            }
+
+            return Ok(); // Return 200 OK for AJAX
+        }
 
 
         public async Task<IActionResult> GetCartSummary()

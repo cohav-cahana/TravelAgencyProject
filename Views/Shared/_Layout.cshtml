@@ -101,22 +101,28 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            var cartIcon = document.getElementById('cartIcon');
-            if(cartIcon) {
-                cartIcon.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    // Load the content from the controller
-                    fetch('/Trips/GetCartSummary')
-                        .then(response => response.text())
-                        .then(html => {
-                            document.getElementById('cartModalBody').innerHTML = html;
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            document.getElementById('cartModalBody').innerHTML = "Error loading cart.";
+            var modalBody = document.getElementById('cartModalBody');
+
+            function loadCart() {
+                fetch('/Trips/GetCartSummary')
+                    .then(r => r.text())
+                    .then(html => {
+                        modalBody.innerHTML = html;
+                        // Attach listeners to newly created trash buttons
+                        modalBody.querySelectorAll('.btn-remove').forEach(btn => {
+                            btn.onclick = function() {
+                                var id = this.dataset.id;
+                                fetch('/Trips/RemoveFromCart/' + id, { method: 'POST' })
+                                    .then(() => loadCart()); // Reload popup content after removal
+                            };
                         });
-                });
+                    });
             }
+
+            document.getElementById('cartIcon').onclick = function(e) {
+                e.preventDefault();
+                loadCart();
+            };
         });
     </script>
 

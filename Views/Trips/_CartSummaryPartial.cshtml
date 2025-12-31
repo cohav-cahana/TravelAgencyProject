@@ -2,7 +2,10 @@
 
 @if (!Model.Any())
 {
-    <p class="text-center">Your cart is empty.</p>
+    <div class="text-center py-3">
+        <i class="bi bi-cart-x fs-1 text-muted"></i>
+        <p class="mt-2">Your cart is empty.</p>
+    </div>
 }
 else
 {
@@ -12,13 +15,19 @@ else
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                     <strong>@item.Destination</strong><br />
-                    <small>@item.Price.ToString("C")</small>
+                    <small class="text-muted">@item.Price.ToString("C")</small>
                 </div>
-                <i class="bi bi-check-circle text-success"></i>
+                <button class="btn btn-sm btn-outline-danger border-0 btn-remove" data-id="@item.TripId">
+                    <i class="bi bi-trash"></i>
+                </button>
             </li>
         }
     </ul>
-    <div class="d-grid gap-2">
+    <div class="d-grid gap-2 border-top pt-3">
+        <div class="d-flex justify-content-between mb-2 fw-bold px-1">
+            <span>Total:</span>
+            <span>@Model.Sum(t => t.SalePrice ?? t.Price).ToString("C")</span>
+        </div>
         <a asp-controller="Booking" asp-action="Cart" class="btn btn-primary">Check Out Now</a>
     </div>
 }
