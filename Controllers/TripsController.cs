@@ -230,77 +230,7 @@ namespace TravelAgencyProject.Controllers
             return View(trip);
         }
 
-        public async Task<IActionResult> Checkout(int tripId)
-        {
-            var userIdString = HttpContext.Session.GetString("UserId");
-            if (string.IsNullOrEmpty(userIdString))
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var trip = await _context.Trips.FindAsync(tripId);
-            if (trip == null) return NotFound();
-
-            if (trip.Stock <= 0)
-            {
-                return View("~/Views/Booking/WaitingListNotice.cshtml", trip);
-            }
-            var booking = new Booking
-            {
-                TripId = trip.TripId,
-                Trip = trip,
-                UserId = int.Parse(userIdString),
-                TotalPrice = trip.Price
-            };
-
-            return View("~/Views/Booking/Checkout.cshtml", booking);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessBooking(Booking booking)
-        {
-            var trip = await _context.Trips.FindAsync(booking.TripId);
-
-            if (trip != null)
-            {
-                booking.TotalPrice = trip.Price * booking.PeopleCount;
-            }
-
-            ModelState.Remove("User");
-            ModelState.Remove("Trip");
-            ModelState.Remove("TotalPrice");
-
-            if (ModelState.IsValid)
-            {
-                if (trip != null)
-                {
-                    if (trip.Stock <= 0)
-                    {
-                        TempData["Error"] = "Sorry, this trip is now fully booked.";
-                        return RedirectToAction("Index");
-                    }
-
-                    trip.Stock -= 1;
-                    _context.Update(trip);
-                }
-
-                booking.BookingDate = DateTime.Now;
-                booking.PaymentStatus = PaymentStatus.Completed;
-                booking.bookingStatus = TripStatus.Upcoming;
-
-                _context.Bookings.Add(booking);
-
-                await _context.SaveChangesAsync();
-
-                booking.Trip = trip;
-                return View("~/Views/Booking/Confirmation.cshtml", booking);
-            }
-
-            booking.Trip = trip;
-            return View("~/Views/Booking/Checkout.cshtml", booking);
-        }
-
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelBooking(int id)
@@ -346,39 +276,42 @@ namespace TravelAgencyProject.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int id)
+        public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false) // Added bool parameter
         {
-            // Get current cart from session
             var cartJson = HttpContext.Session.GetString("Cart");
             List<int> cart = string.IsNullOrEmpty(cartJson)
                 ? new List<int>()
                 : System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
 
-            // Get UserId from session to check for active bookings in DB
             var userIdString = HttpContext.Session.GetString("UserId");
             int activeBookingsCount = 0;
 
             if (!string.IsNullOrEmpty(userIdString))
             {
                 int userId = int.Parse(userIdString);
-                // Count existing bookings with 'Upcoming' status for this user
                 activeBookingsCount = await _context.Bookings
                     .CountAsync(b => b.UserId == userId && b.bookingStatus == TripStatus.Upcoming);
             }
 
-            // Limit check: Total active trips (bookings + cart) cannot exceed 3
+            // Limit check
             if (activeBookingsCount + cart.Count >= 3)
             {
-                // Display error message and stop the process
-                TempData["Error"] = "You can only have up to 3 active trips in total (including your cart and bookings).";
+                TempData["Error"] = "You can only have up to 3 active trips.";
                 return RedirectToAction("Index");
             }
 
-            // Add trip ID to the cart list
-            cart.Add(id);
+            // Add trip to cart if it's not already there (optional check)
+            if (!cart.Contains(id))
+            {
+                cart.Add(id);
+                HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
+            }
 
-            // Save updated cart back to session
-            HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
+            // If "BOOK NOW" was clicked, go straight to Checkout
+            if (goToCheckout)
+            {
+                return RedirectToAction("CartCheckout");
+            }
 
             TempData["Message"] = "Trip added to your cart!";
             return RedirectToAction("Index");
@@ -442,6 +375,7 @@ namespace TravelAgencyProject.Controllers
         }
         // Action to process the multiple bookings from the cart
         [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> ProcessCartBooking(int peopleCount)
         {
             var userIdString = HttpContext.Session.GetString("UserId");
@@ -455,39 +389,60 @@ namespace TravelAgencyProject.Controllers
             int userId = int.Parse(userIdString);
             List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
 
-            // Loop through each trip in the cart and create a Booking entry
+            decimal totalOrderPrice = 0;
+            List<string> destinationNames = new List<string>();
+
+            // 1. Process each trip in the cart
             foreach (var id in tripIds)
             {
                 var trip = await _context.Trips.FindAsync(id);
 
-                // Ensure trip exists and has available stock
                 if (trip != null && trip.Stock > 0)
                 {
+                    decimal currentTripPrice = (trip.SalePrice ?? trip.Price) * peopleCount;
+
                     var booking = new Booking
                     {
                         UserId = userId,
                         TripId = id,
                         PeopleCount = peopleCount,
-                        TotalPrice = (trip.SalePrice ?? trip.Price) * peopleCount,
+                        TotalPrice = currentTripPrice,
                         BookingDate = DateTime.Now,
                         PaymentStatus = PaymentStatus.Completed,
                         bookingStatus = TripStatus.Upcoming
                     };
 
-                    // Reduce the stock count in the database
+                    // Accumulate data for the confirmation summary
+                    totalOrderPrice += currentTripPrice;
+                    destinationNames.Add(trip.Destination);
+
+                    // Update database
                     trip.Stock -= 1;
                     _context.Bookings.Add(booking);
                 }
             }
 
-            // Save all changes to the database
+            // 2. Save all bookings to DB
             await _context.SaveChangesAsync();
 
-            // Clear the shopping cart session after successful payment
+            // 3. Clear the cart session
             HttpContext.Session.Remove("Cart");
 
-            TempData["Message"] = "Thank you! All your trips have been successfully booked.";
-            return RedirectToAction("Index", "Booking");
+            // 4. Create a "Summary Booking" object to satisfy the Confirmation View requirement
+            // We create a dummy Trip object inside it to hold all destination names
+            var summaryBooking = new Booking
+            {
+                PeopleCount = peopleCount,
+                TotalPrice = totalOrderPrice,
+                BookingDate = DateTime.Now,
+                Trip = new Trip
+                {
+                    Destination = string.Join(", ", destinationNames) // Combines all names: "London, Paris, Tokyo"
+                }
+            };
+
+            // 5. Return the existing confirmation view with the summary object
+            return View("~/Views/Booking/Confirmation.cshtml", summaryBooking);
         }
     }
 }

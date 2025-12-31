@@ -35,9 +35,14 @@
 
                         @if (Context.Session.GetString("IsAdmin") != "true")
                         {
-                        <a asp-action="Checkout" asp-route-tripId="@Model.TripId" class="btn btn-success btn-lg shadow fw-bold">
-                            ✈️ BOOK NOW
-                        </a>
+                            @* Using a form to trigger AddToCart with immediate redirect to Checkout *@
+                            <form asp-action="AddToCart" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@Model.TripId" />
+                                <input type="hidden" name="goToCheckout" value="true" />
+                                <button type="submit" class="btn btn-success btn-lg shadow fw-bold">
+                                    ✈️ BOOK NOW
+                                </button>
+                            </form>
                         }
 
                         @if (Context.Session.GetString("IsAdmin") == "true")
