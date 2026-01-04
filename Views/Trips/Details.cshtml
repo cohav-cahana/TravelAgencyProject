@@ -32,17 +32,31 @@
 
                     <div class="mt-5 d-flex gap-2 align-items-center">
                         <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Back to List</a>
-
-                        @if (Context.Session.GetString("IsAdmin") != "true")
-                        {
-                            @* Using a form to trigger AddToCart with immediate redirect to Checkout *@
-                            <form asp-action="AddToCart" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="@Model.TripId" />
-                                <input type="hidden" name="goToCheckout" value="true" />
-                                <button type="submit" class="btn btn-success btn-lg shadow fw-bold">
-                                    ✈️ BOOK NOW
-                                </button>
-                            </form>
+                            @if (Context.Session.GetString("IsAdmin") != "true")
+                            {
+                                @if (Model.Stock > 0)
+                                {
+								// the trip has available seats - show "Book Now" button
+                                    <form asp-action="AddToCart" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@Model.TripId" />
+                                        <input type="hidden" name="goToCheckout" value="true" />
+                                        <button type="submit" class="btn btn-success btn-lg shadow fw-bold">
+                                            ✈️ BOOK NOW
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+								// the trip is fully booked - show "Join Waiting List" button
+                                    <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline">
+                                        <input type="hidden" name="tripId" value="@Model.TripId" />
+                                        <button type="submit" class="btn btn-warning btn-lg shadow fw-bold">
+                                            ⏳ Join Waiting List
+                                        </button>
+                                    </form>
+                                    <p class="text-danger mt-2 fw-bold">This trip is fully booked. Join the waiting list to be notified!</p>
+                                }
+                            }
                         }
 
                         @if (Context.Session.GetString("IsAdmin") == "true")

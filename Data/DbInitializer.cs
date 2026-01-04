@@ -60,7 +60,7 @@ namespace TravelAgencyProject.Data
                     Destination = "Paris", Country = "France",
                     Description = "Experience the romantic city of lights, visit the Eiffel Tower and enjoy fine dining.",
                     StartDate = DateTime.Today.AddDays(30), EndDate = DateTime.Today.AddDays(37),
-                    Price = 1200, Stock = 10, Category = "Honeymoon", AgeLimitaion = 18, IsVisible = true,
+                    Price = 1200, Stock = 1, Category = "Honeymoon", AgeLimitaion = 18, IsVisible = true,
                     ImageUrl = "/images/trips/paris.jpg"
                 },
                 new Trip {
