@@ -77,6 +77,5 @@ namespace TravelAgencyProject.Controllers
             }
             return RedirectToAction(nameof(AdminWaitingList));
         }
-
     }
 }
