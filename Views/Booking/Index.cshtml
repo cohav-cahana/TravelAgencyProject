@@ -2,12 +2,47 @@
 
 @{
     ViewData["Title"] = "My Bookings";
+    // Fetch past bookings from ViewBag (passed from the Controller)
     var pastBookings = ViewBag.PastBookings as List<TravelAgencyProject.Models.Booking>;
 }
+
+@* --- Custom Styles --- *@
+<style>
+    .countdown-timer {
+        font-family: 'Courier New', Courier, monospace; /* Monospace font prevents digits from "jumping" */
+        letter-spacing: 1px;
+        font-size: 1.1rem;
+        background: rgba(13, 110, 253, 0.05); /* Light blue background for emphasis */
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
+        transition: color 0.5s ease;
+    }
+
+    /* Pulse animation for urgency when less than 24 hours remain */
+    .text-danger.animate-pulse {
+        animation: pulse-red 2s infinite;
+    }
+
+    @@keyframes pulse-red {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+</style>
 
 <div class="container mt-5">
     <h2 class="mb-4"><i class="bi bi-suit-case-lg"></i> My Bookings</h2>
 
+    @* --- Status Messages --- *@
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
@@ -23,6 +58,8 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
+
+    @* --- Upcoming Bookings Table --- *@
     @if (!Model.Any())
     {
         <div class="alert alert-info shadow-sm">
@@ -55,21 +92,41 @@
                             <td>@item.PeopleCount</td>
                             <td class="fw-bold">$@item.TotalPrice</td>
                             <td>
-                                <span class="badge bg-success">Upcoming</span>
+                                @if (item.bookingStatus == TravelAgencyProject.Models.TripStatus.Cancelled)
+                                {
+                                    <span class="badge bg-danger">Cancelled</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Upcoming</span>
+                                }
                             </td>
                             <td>
-                                <div class="d-flex gap-2">
+                                @* Countdown Timer - Only shown for Upcoming bookings *@
+                                @if (item.bookingStatus == TravelAgencyProject.Models.TripStatus.Upcoming)
+                                {
+                                    <div class="p-2 bg-light rounded border text-center mb-2">
+                                        <h6 class="text-muted small mb-1">Time until departure:</h6>
+                                        <div class="countdown-timer fw-bold text-primary"
+                                             id="timer-@item.BookingId"
+                                             data-startdate="@item.Trip?.StartDate.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                            Calculating...
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="d-flex gap-2 justify-content-center">
                                     @if (item.bookingStatus != TravelAgencyProject.Models.TripStatus.Cancelled)
                                     {
-                                        @* --- PDF Download Button --- *@
+                                        @* PDF Receipt Download Button *@
                                         <button onclick="downloadBookingPDF('@item.BookingId', '@item.Trip?.Destination', '@item.Trip?.Country', '@item.BookingDate.ToShortDateString()', '@item.PeopleCount', '@item.TotalPrice')"
                                                 class="btn btn-outline-success btn-sm">
                                             <i class="bi bi-file-earmark-pdf"></i> Receipt
                                         </button>
 
-                                        @* --- Cancel Button --- *@
+                                        @* Cancel Booking Form *@
                                         <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post"
-                                              onsubmit="return confirm('Are you sure you want to cancel this booking? The seats will be returned to stock.');" class="d-inline">
+                                              onsubmit="return confirm('Are you sure you want to cancel this booking?');" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                                 <i class="bi bi-x-circle"></i> Cancel
@@ -78,7 +135,7 @@
                                     }
                                     else
                                     {
-                                        <button class="btn btn-sm btn-light" disabled>Cancelled</button>
+                                        <button class="btn btn-sm btn-light" disabled>No Actions Available</button>
                                     }
                                 </div>
                             </td>
@@ -89,6 +146,7 @@
         </div>
     }
 
+    @* --- Past Bookings History Section --- *@
     @if (pastBookings != null && pastBookings.Any())
     {
         <div class="mt-5">
@@ -130,58 +188,82 @@
 </div>
 
 @section Scripts {
-@* Load html2pdf library *@
+@* External Library for PDF Generation *@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
+        /**
+         * Generates and downloads a styled PDF receipt for a specific booking.
+         */
         function downloadBookingPDF(id, dest, country, date, people, price) {
-            // Create a styled HTML element for the PDF content
             const element = document.createElement('div');
             element.innerHTML = `
-                <div style="padding: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
+                <div style="padding: 40px; font-family: sans-serif; color: #333;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #0d6efd; margin-bottom: 5px;">TravelAgency Service</h1>
+                        <h1 style="color: #0d6efd;">TravelAgency Service</h1>
                         <p style="color: #6c757d;">Official Booking Receipt</p>
                     </div>
-                    <hr style="border: 0; border-top: 2px solid #eee; margin-bottom: 30px;">
-
-                    <h3 style="color: #198754; margin-bottom: 20px;">Booking Details - Order #${id}</h3>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-                        <tr>
-                            <td style="padding: 12px 0; font-weight: bold; border-bottom: 1px solid #eee;">Destination:</td>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${dest}, ${country}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 0; font-weight: bold; border-bottom: 1px solid #eee;">Booking Date:</td>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${date}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 0; font-weight: bold; border-bottom: 1px solid #eee;">Number of Travelers:</td>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${people}</td>
-                        </tr>
-                        <tr style="background-color: #f8f9fa;">
-                            <td style="padding: 15px 10px; font-weight: bold; color: #0d6efd; font-size: 1.2em;">Total Paid:</td>
-                            <td style="padding: 15px 10px; color: #0d6efd; font-size: 1.2em; font-weight: bold; text-align: right;">$${price}</td>
-                        </tr>
-                    </table>
-
-                    <div style="margin-top: 50px; font-size: 0.9em; color: #777; text-align: center; border-top: 1px solid #eee; pt-20">
-                        <p>Thank you for choosing TravelAgency for your journey!</p>
-                        <p>If you have any questions, please contact our support.</p>
+                    <hr style="border-top: 2px solid #eee; margin-bottom: 30px;">
+                    <h3>Booking Details - Order #${id}</h3>
+                    <p><strong>Destination:</strong> ${dest}, ${country}</p>
+                    <p><strong>Booking Date:</strong> ${date}</p>
+                    <p><strong>Travelers:</strong> ${people}</p>
+                    <div style="background: #f8f9fa; padding: 15px; margin-top: 20px;">
+                        <h4 style="color: #0d6efd; margin: 0;">Total Paid: $${price}</h4>
                     </div>
                 </div>
             `;
 
             const opt = {
                 margin: 10,
-                filename: 'TravelAgency_Receipt_' + id + '.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
+                filename: 'Receipt_' + id + '.pdf',
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Process and Save the PDF
             html2pdf().set(opt).from(element).save();
         }
+
+        /**
+         * Updates all countdown timers on the page based on their 'data-startdate' attribute.
+         */
+        function updateCountdowns() {
+            const now = new Date().getTime();
+
+            document.querySelectorAll('.countdown-timer').forEach(timer => {
+                const startDateStr = timer.getAttribute('data-startdate');
+                const startDate = new Date(startDateStr).getTime();
+                const distance = startDate - now;
+
+                // Handle expired dates (trip already started)
+                if (distance < 0) {
+                    timer.innerHTML = "Flight has departed!";
+                    timer.className = "countdown-timer fw-bold text-success";
+                    return;
+                }
+
+                // Visual Warning: Red color if less than 24 hours remain
+                if (distance < 86400000) { // 24 hours in milliseconds
+                    timer.classList.remove('text-primary');
+                    timer.classList.add('text-danger', 'animate-pulse');
+                } else {
+                    timer.classList.add('text-primary');
+                    timer.classList.remove('text-danger', 'animate-pulse');
+                }
+
+                // Time calculations
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Update text
+                timer.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            });
+        }
+
+        // Initialize and set interval for the countdown
+        updateCountdowns();
+        setInterval(updateCountdowns, 1000);
     </script>
 }
