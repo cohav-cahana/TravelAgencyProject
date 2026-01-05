@@ -104,6 +104,27 @@ namespace TravelAgencyProject.Controllers
         {
             _context = context;
         }
+
+        public async Task<IActionResult> Profile()
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return RedirectToAction("Login");
+            }
+
+            int userId = int.Parse(userIdString);
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return View(user);
+        }
     }
 }
 

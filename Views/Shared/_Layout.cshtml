@@ -32,6 +32,15 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Booking" asp-action="Index">My Bookings</a>
                         </li>
 
+                        @if (Context.Session.GetString("UserId") != null)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-primary fw-bold" asp-area="" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person-badge"></i> My Profile
+                                </a>
+                            </li>
+                        }
+
                         <li class="nav-item ms-lg-2">
                             <a class="nav-link text-dark position-relative p-2" href="#" data-bs-toggle="modal" data-bs-target="#cartModal" id="cartIcon">
                                 <i class="bi bi-cart3 fs-5"></i>
@@ -77,6 +86,7 @@
             &copy; 2025 - TravelAgencyProject - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -108,12 +118,11 @@
                     .then(r => r.text())
                     .then(html => {
                         modalBody.innerHTML = html;
-                        // Attach listeners to newly created trash buttons
                         modalBody.querySelectorAll('.btn-remove').forEach(btn => {
                             btn.onclick = function() {
                                 var id = this.dataset.id;
                                 fetch('/Trips/RemoveFromCart/' + id, { method: 'POST' })
-                                    .then(() => loadCart()); // Reload popup content after removal
+                                    .then(() => loadCart());
                             };
                         });
                     });
