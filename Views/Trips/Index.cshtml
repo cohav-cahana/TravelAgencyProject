@@ -12,15 +12,16 @@
 
     body {
         background-color: var(--soft-bg);
+        font-family: 'Segoe UI', sans-serif;
     }
 
-    /* עיצוב הודעות מערכת צפות בראש העמוד */
+    /* התראות צפות */
     .alert-floating-container {
         position: fixed;
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 9999;
+        z-index: 10000;
         width: 90%;
         max-width: 500px;
     }
@@ -29,13 +30,10 @@
         border: none;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        padding: 15px 20px;
-        display: flex;
-        align-items: center;
         backdrop-filter: blur(10px);
     }
 
-    /* עיצוב הכרטיסים */
+    /* כרטיסים */
     .trip-card {
         border: none;
         border-radius: 20px;
@@ -51,8 +49,6 @@
 
     .img-container {
         position: relative;
-        border-radius: 20px 20px 0 0;
-        overflow: visible;
         height: 220px;
     }
 
@@ -67,14 +63,17 @@
         position: absolute;
         top: 15px;
         left: 15px;
-        background: rgba(0, 102, 255, 0.8) !important;
+        background: rgba(0, 102, 255, 0.85) !important;
         backdrop-filter: blur(5px);
         border-radius: 50px;
         padding: 6px 14px;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 700;
         z-index: 2;
+        color: white;
     }
 
+    /* כפתור עגלה עגול ולא חתוך */
     .add-cart-wrapper {
         position: absolute;
         bottom: -25px;
@@ -92,26 +91,26 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         transition: all 0.3s ease;
     }
 
         .btn-add-circle:hover {
             transform: scale(1.1) rotate(90deg);
             background-color: #0052cc;
-            color: white;
         }
 
+    /* סרגל סינון משופר */
     .search-section {
         background: white;
         border-radius: 20px;
-        padding: 30px;
+        padding: 25px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        margin-bottom: 50px;
+        margin-bottom: 40px;
     }
 
     .price-regular {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 800;
         color: #212529;
     }
@@ -119,11 +118,11 @@
     .price-sale {
         color: #dc3545;
         font-weight: 800;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 
     .price-old {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: #adb5bd;
         text-decoration: line-through;
         display: block;
@@ -133,58 +132,66 @@
 <div class="alert-floating-container">
     @if (TempData["Message"] != null)
     {
-        <div class="alert alert-success alert-custom alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <div>@TempData["Message"]</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success alert-custom alert-dismissible fade show shadow" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-custom alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <div>@TempData["Error"]</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-danger alert-custom alert-dismissible fade show shadow" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 </div>
 
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-end mb-5">
-        <div>
-            <h1 class="fw-bold display-5 mb-0">Explore <span class="text-primary">Trips</span></h1>
-            <p class="text-muted">Find your next adventure</p>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold display-6 mb-0">Discover <span class="text-primary">Your Journey</span></h1>
         @if (Context.Session.GetString("IsAdmin") == "true")
         {
-            <a asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Add Trip</a>
+            <a asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">+ Add Trip</a>
         }
     </div>
 
     <div class="search-section">
         <form asp-action="Index" method="get" class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="small fw-bold text-muted text-uppercase">Search</label>
-                <input type="text" name="searchString" class="form-control bg-light border-0" placeholder="Where to?" value="@ViewData["CurrentFilter"]" />
+            <div class="col-lg-3 col-md-6">
+                <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                    <input type="text" name="searchString" class="form-control bg-light border-0" placeholder="Destination..." value="@ViewData["CurrentFilter"]" />
+                </div>
             </div>
-            <div class="col-md-3">
-                <label class="small fw-bold text-muted text-uppercase">Category</label>
+
+            <div class="col-lg-3 col-md-6">
+                <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Category</label>
                 <select name="category" class="form-select bg-light border-0">
-                    <option value="">All</option>
+                    <option value="">All Categories</option>
                     <option value="Family">Family</option>
+                    <option value="Honeymoon">Honeymoon</option>
                     <option value="Adventure">Adventure</option>
+                    <option value="Cruise">Cruise</option>
                     <option value="Luxury">Luxury</option>
+                    <option value="History">History</option>
+                    <option value="City Break">City Break</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <label class="small fw-bold text-muted text-uppercase">Sort</label>
+
+            <div class="col-lg-4 col-md-8">
+                <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Sort By</label>
                 <select name="sortBy" class="form-select bg-light border-0">
-                    <option value="date">Upcoming</option>
+                    <option value="date">Travel Date (Soonest First)</option>
                     <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="popularity">Most Popular</option>
+                    <option value="destination">A-Z Destination</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Apply</button>
+
+            <div class="col-lg-2 col-md-4">
+                <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Filter</button>
             </div>
         </form>
     </div>
@@ -200,7 +207,7 @@
 
                         <div class="add-cart-wrapper">
                             <form asp-action="AddToCart" asp-route-id="@item.TripId" method="post">
-                                <button type="submit" class="btn btn-add-circle">
+                                <button type="submit" class="btn btn-add-circle" title="Add to Cart">
                                     <i class="bi bi-cart-plus fs-5"></i>
                                 </button>
                             </form>
@@ -208,9 +215,15 @@
                     </div>
 
                     <div class="card-body p-4 pt-5">
-                        <span class="text-primary fw-bold small text-uppercase">@item.Country</span>
-                        <h4 class="fw-bold mb-3">@item.Destination</h4>
-                        <p class="text-muted small mb-4">@item.Description</p>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <span class="text-primary fw-bold small text-uppercase">@item.Country</span>
+                                <h4 class="fw-bold mb-0">@item.Destination</h4>
+                            </div>
+                            <small class="text-muted"><i class="bi bi-calendar3"></i> @item.StartDate.ToString("dd/MM")</small>
+                        </div>
+
+                        <p class="text-muted small mb-4" style="height: 40px; overflow: hidden;">@item.Description</p>
 
                         <div class="d-flex justify-content-between align-items-center mt-auto border-top pt-3">
                             <div>
