@@ -1,6 +1,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using TravelAgencyProject.Data;
+using TravelAgencyProject.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,11 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+// Register our new services
+builder.Services.AddSingleton<EmailService>();
+builder.Services.AddHostedService<NotificationWorker>();
+
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

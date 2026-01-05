@@ -157,8 +157,22 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <button class="btn btn-action btn-notify me-1">Notify</button>
-                                <button class="btn btn-action btn-remove">Remove</button>
+                                @if (!item.HasBeenNotified)
+                                {
+                                    <form asp-controller="Booking" asp-action="NotifyUser" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-action btn-notify me-1">Notify</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small me-2">Already Sent</span>
+                                }
+
+                                <form asp-controller="Booking" asp-action="RemoveFromWaitingList" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-action btn-remove">Remove</button>
+                                </form>
                             </td>
                         </tr>
                     }

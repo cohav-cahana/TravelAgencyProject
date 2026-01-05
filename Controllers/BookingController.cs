@@ -2,16 +2,19 @@
 using Microsoft.EntityFrameworkCore;
 using TravelAgencyProject.Data;
 using TravelAgencyProject.Models;
+using TravelAgencyProject.Services;
 
 namespace TravelAgencyProject.Controllers
 {
     public class BookingController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly EmailService _emailService; // 1. Add the email service
 
-        public BookingController(AppDbContext context)
+        public BookingController(AppDbContext context, EmailService emailService)
         {
             _context = context;
+            _emailService = emailService; // 2. Initialize the email service
         }
 
         public async Task<IActionResult> Index()
@@ -55,12 +58,21 @@ namespace TravelAgencyProject.Controllers
         [HttpPost]
         public async Task<IActionResult> NotifyUser(int id)
         {
-            var entry = await _context.WaitingLists.FindAsync(id);
+            // Find the entry and include the User and Trip details to get the email and destination
+            var entry = await _context.WaitingLists
+                .Include(w => w.User)
+                .Include(w => w.Trip)
+                .FirstOrDefaultAsync(w => w.Id == id);
+
             if (entry != null)
             {
+                // 3. Send the email manually now because the Admin clicked the button
+                await _emailService.SendEmailAsync(entry.User.Email, "Room Available!",
+                    $"Hi {entry.User.FirstName}, a room is now available for {entry.Trip.Destination}. You can now proceed with your booking.");
+
                 entry.HasBeenNotified = true;
                 await _context.SaveChangesAsync();
-                TempData["AdminMessage"] = "The customer has been marked as notified.";
+                TempData["AdminMessage"] = "The customer has been notified via email.";
             }
             return RedirectToAction(nameof(AdminWaitingList));
         }

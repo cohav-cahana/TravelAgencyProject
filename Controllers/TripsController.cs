@@ -2,18 +2,20 @@
 using Microsoft.EntityFrameworkCore;
 using TravelAgencyProject.Data;
 using TravelAgencyProject.Models;
+using TravelAgencyProject.Services;
 
 namespace TravelAgencyProject.Controllers
 {
     public class TripsController : Controller
     {
-
+        private readonly EmailService _emailService;
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment; //Help us to find the wwwroot (images folder)
-        public TripsController(AppDbContext context, IWebHostEnvironment webHostEnvironment)
+        public TripsController(AppDbContext context, IWebHostEnvironment webHostEnvironment, EmailService emailService)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
+            _emailService = emailService;
         }
         public IActionResult Index(string searchString, string category, string sortBy)
         {
@@ -34,10 +36,10 @@ namespace TravelAgencyProject.Controllers
 
             trips = sortBy switch
             {
-                "price_asc" => trips.OrderBy(t => t.SalePrice ?? t.Price), // מהזול ליקר
-                "price_desc" => trips.OrderByDescending(t => t.SalePrice ?? t.Price), // מהיקר לזול
-                "destination" => trips.OrderBy(t => t.Destination), // לפי א'-ב' של יעד
-                _ => trips.OrderBy(t => t.StartDate) // ברירת מחדל: לפי תאריך יציאה
+                "price_asc" => trips.OrderBy(t => t.SalePrice ?? t.Price), 
+                "price_desc" => trips.OrderByDescending(t => t.SalePrice ?? t.Price), 
+                "destination" => trips.OrderBy(t => t.Destination), 
+                _ => trips.OrderBy(t => t.StartDate) 
             };
 
             ViewData["CurrentFilter"] = searchString;
@@ -384,7 +386,7 @@ namespace TravelAgencyProject.Controllers
         }
         // Action to process the multiple bookings from the cart
         [HttpPost]
-        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessCartBooking(int peopleCount)
         {
             var userIdString = HttpContext.Session.GetString("UserId");
@@ -421,24 +423,27 @@ namespace TravelAgencyProject.Controllers
                         bookingStatus = TripStatus.Upcoming
                     };
 
-                    // Accumulate data for the confirmation summary
                     totalOrderPrice += currentTripPrice;
                     destinationNames.Add(trip.Destination);
 
-                    // Update database
                     trip.Stock -= 1;
                     _context.Bookings.Add(booking);
                 }
             }
 
-            // 2. Save all bookings to DB
+            // 2. Save all bookings to Database
             await _context.SaveChangesAsync();
 
-            // 3. Clear the cart session
-            HttpContext.Session.Remove("Cart");
+            // 3. SEND EMAIL (Requirement: Notification after payment)
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                //  Sending the email right after saving to DB
+                await _emailService.SendEmailAsync(user.Email, "Booking Confirmation",
+                    $"Hi {user.FirstName}, your booking for {string.Join(", ", destinationNames)} is confirmed!");
+            }
 
-            // 4. Create a "Summary Booking" object to satisfy the Confirmation View requirement
-            // We create a dummy Trip object inside it to hold all destination names
+            // 4. Create the summary object for the View
             var summaryBooking = new Booking
             {
                 PeopleCount = peopleCount,
@@ -446,11 +451,14 @@ namespace TravelAgencyProject.Controllers
                 BookingDate = DateTime.Now,
                 Trip = new Trip
                 {
-                    Destination = string.Join(", ", destinationNames) // Combines all names: "London, Paris, Tokyo"
+                    Destination = string.Join(", ", destinationNames)
                 }
             };
 
-            // 5. Return the existing confirmation view with the summary object
+            // 5. Clear the cart session
+            HttpContext.Session.Remove("Cart");
+
+            // 6. Return the confirmation view
             return View("~/Views/Booking/Confirmation.cshtml", summaryBooking);
         }
     }

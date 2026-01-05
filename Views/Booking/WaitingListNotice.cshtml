@@ -10,7 +10,7 @@
             <p>Would you like to join the waiting list? We'll let you know if a spot opens up.</p>
 
             <div class="mt-4 d-grid gap-2">
-                @* כפתור שמוביל לפעולת הרישום *@
+             
                 <form asp-controller="Trips" asp-action="JoinWaitingList" method="post">
                     <input type="hidden" name="tripId" value="@Model.TripId" />
                     <button type="submit" class="btn btn-primary btn-lg w-100">Yes, Add me to the Waiting List</button>
