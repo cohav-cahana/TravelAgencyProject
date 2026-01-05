@@ -4,44 +4,166 @@
     ViewData["Title"] = "Waiting List Management";
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4">Admin - Waiting List Management
-        <span class="badge bg-info">Total: @Model.Count()</span>
-    </h2>
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-    <table class="table table-hover shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Customer Name</th>
-                <th>Trip</th>
-                <th>Request Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.User?.FirstName @item.User?.LastName</td>
-                    <td>@item.Trip?.Destination</td>
-                    <td>@item.RequestDate.ToString("dd/MM/yyyy HH:mm")</td>
-                    <td>
-                        @if (item.HasBeenNotified)
-                        {
-                            <span class="badge bg-success">Notified</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        }
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-primary">Notify</button>
-                        <button class="btn btn-sm btn-outline-danger">Remove</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    .admin-wrapper {
+        padding: 40px 0;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: #212529;
+        font-size: 1.75rem;
+    }
+
+    .table-container {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        border: none;
+    }
+
+    .table {
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+
+        .table thead th {
+            background-color: #ffffff;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+            border-top: none;
+            border-bottom: 2px solid #f8f9fa;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 18px 15px;
+            color: #495057;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+    .badge-status {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .bg-light-success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .bg-light-warning {
+        background-color: #fff3e0;
+        color: #ef6c00;
+    }
+
+    .btn-action {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .btn-notify {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+
+        .btn-notify:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+    .btn-remove {
+        color: #dc3545;
+        border: 1px solid #dc3545;
+        background: transparent;
+    }
+
+        .btn-remove:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+</style>
+
+<div class="container admin-wrapper">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Waiting List Management</h2>
+            <p class="text-muted small mb-0">Manage customer notifications for fully booked trips</p>
+        </div>
+        <div class="badge bg-white text-primary shadow-sm px-3 py-2 rounded-pill fw-bold border">
+            Total Requests: @Model.Count()
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Destination</th>
+                        <th>Request Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-dark">
+                                @item.User?.FirstName @item.User?.LastName
+                            </td>
+                            <td>
+                                <span class="text-secondary"><i class="fas fa-map-marker-alt me-1"></i> @item.Trip?.Destination</span>
+                            </td>
+                            <td class="small text-muted">
+                                @item.RequestDate.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td>
+                                @if (item.HasBeenNotified)
+                                {
+                                    <span class="badge-status bg-light-success">
+                                        <i class="fas fa-check-circle me-1"></i> Notified
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status bg-light-warning">
+                                        <i class="fas fa-clock me-1"></i> Pending
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-action btn-notify me-1">Notify</button>
+                                <button class="btn btn-action btn-remove">Remove</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
