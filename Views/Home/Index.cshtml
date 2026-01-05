@@ -2,7 +2,110 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<style>
+    .hero-section {
+        padding: 100px 0;
+        background-color: #ffffff;
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #212529;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: #6c757d;
+        max-width: 600px;
+        margin: 0 auto 40px auto;
+    }
+
+    .btn-explore {
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        background-color: #007bff;
+        color: white;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-explore:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.2);
+            color: white;
+        }
+
+    .feature-card {
+        padding: 40px 20px;
+        text-align: center;
+        border: none;
+        background: #fbfbfb;
+        border-radius: 20px;
+        transition: 0.3s;
+    }
+
+        .feature-card:hover {
+            background: #ffffff;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #007bff;
+        margin-bottom: 20px;
+        display: block;
+    }
+</style>
+
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Travel Beyond Limits</h1>
+        <p class="hero-subtitle">Discover hand-picked destinations, exclusive deals, and unforgettable experiences tailored just for you.</p>
+        <a asp-controller="Trips" asp-action="Index" class="btn-explore">Start Your Adventure</a>
+    </div>
+</section>
+
+<section class="py-5 mt-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <span class="feature-icon">🌍</span>
+                    <h4>Global Destinations</h4>
+                    <p class="text-muted">From the Eiffel Tower to the Tokyo skyline, we cover the world.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <span class="feature-icon">💎</span>
+                    <h4>Premium Quality</h4>
+                    <p class="text-muted">We partner with the best hotels and guides to ensure your comfort.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <span class="feature-icon">🛡️</span>
+                    <h4>Secure Booking</h4>
+                    <p class="text-muted">Your data and payments are always protected with top-tier security.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 text-center">
+    <div class="container py-5 bg-dark text-white rounded-5">
+        <h2 class="fw-bold mb-4">Join 10,000+ Happy Travelers</h2>
+        <p class="mb-4 opacity-75">Sign up today to get exclusive discounts directly to your inbox.</p>
+        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-light btn-lg px-5 rounded-pill">Sign Up Now</a>
+    </div>
+</section>

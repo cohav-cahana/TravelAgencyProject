@@ -4,52 +4,159 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow mt-5">
-            <div class="card-header bg-primary text-white">
-                <h3 class="card-title mb-0">Create a New Account</h3>
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    .register-wrapper {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 0;
+    }
+
+    .register-card {
+        border: none;
+        border-radius: 16px;
+        background-color: #ffffff;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        width: 100%;
+        max-width: 550px; 
+        transition: transform 0.3s ease;
+    }
+
+        .register-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .register-title {
+        color: #212529;
+        font-weight: 700;
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .register-subtitle {
+        color: #6c757d;
+        text-align: center;
+        margin-bottom: 35px;
+        font-size: 0.95rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #495057;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .form-control:focus {
+            background-color: #ffffff;
+            border-color: #007bff;
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+            outline: none;
+        }
+
+    .btn-register {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        margin-top: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-register:hover {
+            background-color: #0069d9;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+        }
+
+    .login-link-text {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+        .login-link-text a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+            .login-link-text a:hover {
+                text-decoration: underline;
+            }
+
+    .password-hint {
+        font-size: 0.75rem;
+        line-height: 1.4;
+        margin-top: 8px;
+        color: #6c757d;
+    }
+</style>
+
+<div class="register-wrapper">
+    <div class="register-card">
+        <h2 class="register-title">Create Account</h2>
+        <p class="register-subtitle">Join our community of travelers today</p>
+
+        <form asp-action="Register">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="FirstName" class="form-label text-uppercase">First Name</label>
+                    <input asp-for="FirstName" class="form-control" placeholder="John" />
+                    <span asp-validation-for="FirstName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="LastName" class="form-label text-uppercase">Last Name</label>
+                    <input asp-for="LastName" class="form-control" placeholder="Doe" />
+                    <span asp-validation-for="LastName" class="text-danger small"></span>
+                </div>
             </div>
-            <div class="card-body">
-                <form asp-action="Register">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" placeholder="First Name" />
-                            <span asp-validation-for="FirstName" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" placeholder="Last Name" />
-                            <span asp-validation-for="LastName" class="text-danger"></span>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Email" class="form-label"></label>
-                        <input asp-for="Email" class="form-control" placeholder="name@example.com" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" type="password" placeholder="********" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                        <small class="form-text text-muted">
-                            Password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character.
-                        </small>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">Register</button>
-                    </div>
-                </form>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label text-uppercase">Email Address</label>
+                <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
             </div>
-            <div class="card-footer text-center">
-                Already have an account? <a asp-action="Login">Login here</a>
+
+            <div class="mb-4">
+                <label asp-for="Password" class="form-label text-uppercase">Password</label>
+                <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+                <div class="password-hint">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Password must contain at least 8 characters, including uppercase, lowercase, numbers, and symbols.
+                </div>
             </div>
+
+            <button type="submit" class="btn-register">Start Your Journey</button>
+        </form>
+
+        <div class="login-link-text">
+            Already have an account? <a asp-action="Login">Login here</a>
         </div>
     </div>
 </div>
