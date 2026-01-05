@@ -15,6 +15,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDistributedMemoryCache(); // preprere cache for session management
+
+
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -22,11 +26,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddHttpContextAccessor();
-
 // Register our new services
 builder.Services.AddSingleton<EmailService>();
-builder.Services.AddHostedService<NotificationWorker>();
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
@@ -64,12 +65,4 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-///למחוק הוספתי
-var supportedCultures = new[] { "en-US" };
-var localizationOptions = new RequestLocalizationOptions()
-    .SetDefaultCulture(supportedCultures[0])
-    .AddSupportedCultures(supportedCultures)
-    .AddSupportedUICultures(supportedCultures);
-
-app.UseRequestLocalization(localizationOptions);
 app.Run();

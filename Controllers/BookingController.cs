@@ -89,5 +89,40 @@ namespace TravelAgencyProject.Controllers
             }
             return RedirectToAction(nameof(AdminWaitingList));
         }
+        [HttpPost]
+        public async Task<IActionResult> SendReminders()
+        {
+            // 1. Calculate the target date (exactly 5 days from today)
+            var targetDate = DateTime.Today.AddDays(5);
+
+            // 2. Fetch all bookings from the database that start on the target date.
+            // We use 'Include' to load the User details (for the email) and Trip details (for the destination).
+            // We only filter for 'Upcoming' bookings to avoid sending reminders for cancelled ones.
+            var bookingsToRemind = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Trip)
+                .Where(b => b.Trip.StartDate.Date == targetDate.Date && b.bookingStatus == TripStatus.Upcoming)
+                .ToListAsync();
+
+            int count = 0;
+
+            // Loop through each booking and send a personalized reminder email
+            foreach (var booking in bookingsToRemind)
+            {
+                if (booking.User != null && !string.IsNullOrEmpty(booking.User.Email))
+                {
+                    await _emailService.SendEmailAsync(booking.User.Email,
+                        "Your Trip is Coming Up!",
+                        $"Hi {booking.User.FirstName}, this is a reminder that your trip to {booking.Trip.Destination} departs in 5 days! Get your bags ready.");
+                    count++;
+                }
+            }
+
+            // 3. Set a feedback message for the Admin to see how many emails were sent
+            TempData["AdminMessage"] = $"Success! {count} reminders were sent to travelers departing on {targetDate.ToString("dd/MM/yyyy")}.";
+
+            // Redirect back to the Admin dashboard
+            return RedirectToAction("Index", "Admin");
+        }
     }
 }
