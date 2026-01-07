@@ -109,21 +109,18 @@ namespace TravelAgencyProject.Controllers
             }
             return View(trip);
         }
-        //GET: Trips/Details/5
+        // GET: Trips/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
+            // Fetch the trip including its reviews and the users who wrote them
             var trip = await _context.Trips
+                .Include(t => t.Reviews)
+                    .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync(m => m.TripId == id);
 
-            if (trip == null)
-            {
-                return NotFound();
-            }
+            if (trip == null) return NotFound();
 
             return View(trip);
         }
@@ -397,18 +394,22 @@ namespace TravelAgencyProject.Controllers
             {
                 return RedirectToAction("Index");
             }
+
+            // --- Validation Section ---
+
+            // Validate Credit Card Number (16 digits)
             if (string.IsNullOrEmpty(cardNumber) || cardNumber.Length < 16)
             {
-                ModelState.AddModelError("", "Invalid Credit Card details.");
-                List<int> tripIdsForError = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
-                var tripsInCart = await _context.Trips.Where(t => tripIdsForError.Contains(t.TripId)).ToListAsync();
-
-                return View("CartCheckout", tripsInCart);
+                ModelState.AddModelError("", "Invalid Credit Card details. Must be 16 digits.");
             }
+
+            // Validate CVV (3 digits)
             if (string.IsNullOrEmpty(cvv) || cvv.Length != 3 || !cvv.All(char.IsDigit))
             {
                 ModelState.AddModelError("", "CVV must be exactly 3 digits.");
             }
+
+            // Validate Expiry Date format and date
             if (!string.IsNullOrEmpty(expiryDate) && expiryDate.Contains("/"))
             {
                 var parts = expiryDate.Split('/');
@@ -421,8 +422,11 @@ namespace TravelAgencyProject.Controllers
                         ModelState.AddModelError("", "The credit card has expired.");
                     }
                 }
-                else { ModelState.AddModelError("", "Invalid expiry date format."); }
+                else { ModelState.AddModelError("", "Invalid expiry date format (MM/YY)."); }
             }
+            else { ModelState.AddModelError("", "Expiry date is required."); }
+
+            // If there are validation errors, return to the checkout view with trip details
             if (!ModelState.IsValid)
             {
                 List<int> tripIdsForError = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
@@ -432,17 +436,29 @@ namespace TravelAgencyProject.Controllers
 
             int userId = int.Parse(userIdString);
             List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
-
             decimal totalOrderPrice = 0;
             List<string> destinationNames = new List<string>();
 
-            // 1. Process each trip in the cart
+            // --- Processing Bookings ---
             foreach (var id in tripIds)
             {
                 var trip = await _context.Trips.FindAsync(id);
 
-                if (trip != null && trip.Stock > 0)
+                if (trip != null && trip.Stock >= peopleCount)
                 {
+                    // Requirement Check: Is it the user's turn in the waiting list?
+                    var firstInWaitingList = await _context.WaitingLists
+                        .Where(w => w.TripId == id)
+                        .OrderBy(w => w.RequestDate)
+                        .FirstOrDefaultAsync();
+
+                    // If there's a waiting list, only the first person can book
+                    if (firstInWaitingList != null && firstInWaitingList.UserId != userId)
+                    {
+                        TempData["Error"] = $"Cannot book {trip.Destination}. There is a waiting list and it's not your turn.";
+                        continue;
+                    }
+
                     decimal currentTripPrice = (trip.SalePrice ?? trip.Price) * peopleCount;
 
                     var booking = new Booking
@@ -459,39 +475,45 @@ namespace TravelAgencyProject.Controllers
                     totalOrderPrice += currentTripPrice;
                     destinationNames.Add(trip.Destination);
 
-                    trip.Stock -= 1;
+                    // Important: Deduct the actual number of people from stock
+                    trip.Stock -= peopleCount;
+
                     _context.Bookings.Add(booking);
+
+                    // If user was on waiting list for this trip, remove them
+                    if (firstInWaitingList != null && firstInWaitingList.UserId == userId)
+                    {
+                        _context.WaitingLists.Remove(firstInWaitingList);
+                    }
                 }
             }
 
-            // 2. Save all bookings to Database
             await _context.SaveChangesAsync();
 
-            // 3. SEND EMAIL (Requirement: Notification after payment)
+            // --- Post-Processing ---
+
+            // Send notification email
             var user = await _context.Users.FindAsync(userId);
             if (user != null)
             {
-                //  Sending the email right after saving to DB
-                await _emailService.SendEmailAsync(user.Email, "Booking Confirmation",
-                    $"Hi {user.FirstName}, your booking for {string.Join(", ", destinationNames)} is confirmed!");
+                try
+                {
+                    await _emailService.SendEmailAsync(user.Email, "Booking Confirmation",
+                        $"Hi {user.FirstName}, your booking for {string.Join(", ", destinationNames)} is confirmed!");
+                }
+                catch { /* Fail silently if email service is not configured */ }
             }
 
-            // 4. Create the summary object for the View
+            // Create summary for the Confirmation View
             var summaryBooking = new Booking
             {
                 PeopleCount = peopleCount,
                 TotalPrice = totalOrderPrice,
                 BookingDate = DateTime.Now,
-                Trip = new Trip
-                {
-                    Destination = string.Join(", ", destinationNames)
-                }
+                Trip = new Trip { Destination = string.Join(", ", destinationNames) }
             };
 
-            // 5. Clear the cart session
             HttpContext.Session.Remove("Cart");
-
-            // 6. Return the confirmation view
             return View("~/Views/Booking/Confirmation.cshtml", summaryBooking);
         }
     }

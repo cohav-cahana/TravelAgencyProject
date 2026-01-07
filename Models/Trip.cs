@@ -62,6 +62,9 @@ namespace TravelAgencyProject.Models
         [Range(0, 120, ErrorMessage = "The age a positive number")]
         public int? AgeLimitaion { get; set; }
         public bool IsVisible { get; set; } = true;
+
+        // Navigation property for reviews associated with this trip
+        public List<Review> Reviews { get; set; } = new List<Review>();
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (EndDate <= StartDate)

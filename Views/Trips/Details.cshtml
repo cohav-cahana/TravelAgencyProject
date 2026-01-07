@@ -1,71 +1,218 @@
 ﻿@model TravelAgencyProject.Models.Trip
 
+@{
+    ViewData["Title"] = "Trip Details";
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4 rounded-pill" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 rounded-pill" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="container mt-5">
-    <div class="card shadow-lg border-0">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
         <div class="row g-0">
             <div class="col-md-6">
                 @if (!string.IsNullOrEmpty(Model.ImageUrl))
                 {
-                <img src="@Model.ImageUrl" class="img-fluid rounded-start h-100" style="object-fit: cover; min-height: 400px; width: 100%;" alt="@Model.Destination" />
+                    <img src="@Model.ImageUrl" class="img-fluid h-100" style="object-fit: cover; min-height: 400px; width: 100%;" alt="@Model.Destination" />
                 }
             </div>
 
             <div class="col-md-6">
-                <div class="card-body p-4">
+                <div class="card-body p-4 p-lg-5">
                     <h2 class="card-title fw-bold text-primary">@Model.Destination, @Model.Country</h2>
-                    <span class="badge bg-info text-dark mb-3">@Model.Category</span>
+                    <span class="badge bg-info text-dark mb-3 px-3 py-2">@Model.Category</span>
 
-                    <p class="card-text text-muted">@Model.Description</p>
+                    <p class="card-text text-muted fs-5">@Model.Description</p>
 
-                    <hr />
+                    <hr class="my-4" />
 
-                    <div class="row mt-4">
+                    <div class="row">
                         <div class="col-6">
-                            <h5><strong>📅 Dates:</strong></h5>
-                            <p>@Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
+                            <h6 class="text-uppercase text-muted fw-bold small">📅 Dates</h6>
+                            <p class="fs-5">@Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
                         </div>
                         <div class="col-6 text-end">
-                            <h5><strong>💰 Price:</strong></h5>
-                            <p class="h4 text-success font-weight-bold">$@Model.Price</p>
+                            <h6 class="text-uppercase text-muted fw-bold small">💰 Price</h6>
+                            <p class="h3 text-success fw-bold">$@Model.Price</p>
                         </div>
                     </div>
 
                     <div class="mt-5 d-flex gap-2 align-items-center">
-                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Back to List</a>
-                            @if (Context.Session.GetString("IsAdmin") != "true")
-                            {
-                                @if (Model.Stock > 0)
-                                {
-								// the trip has available seats - show "Book Now" button
-                                    <form asp-action="AddToCart" method="post" class="d-inline">
-                                        <input type="hidden" name="id" value="@Model.TripId" />
-                                        <input type="hidden" name="goToCheckout" value="true" />
-                                        <button type="submit" class="btn btn-success btn-lg shadow fw-bold">
-                                            ✈️ BOOK NOW
-                                        </button>
-                                    </form>
-                                }
-                                else
-                                {
-								// the trip is fully booked - show "Join Waiting List" button
-                                    <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline">
-                                        <input type="hidden" name="tripId" value="@Model.TripId" />
-                                        <button type="submit" class="btn btn-warning btn-lg shadow fw-bold">
-                                            ⏳ Join Waiting List
-                                        </button>
-                                    </form>
-                                    <p class="text-danger mt-2 fw-bold">This trip is fully booked. Join the waiting list to be notified!</p>
-                                }
-                            }
-                        }
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Back to List</a>
 
+                        @* Admin-specific actions *@
                         @if (Context.Session.GetString("IsAdmin") == "true")
                         {
-                        <a asp-action="Edit" asp-route-id="@Model.TripId" class="btn btn-warning btn-lg">Edit Trip</a>
+                            <a asp-action="Edit" asp-route-id="@Model.TripId" class="btn btn-warning btn-lg rounded-pill px-4 shadow-sm">Edit Trip</a>
+                        }
+                        else
+                        {
+                            @* User-specific booking logic *@
+                            @if (Model.Stock > 0)
+                            {
+                                <form asp-action="AddToCart" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.TripId" />
+                                    <input type="hidden" name="goToCheckout" value="true" />
+                                    <button type="submit" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold">
+                                        ✈️ BOOK NOW
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline">
+                                    <input type="hidden" name="tripId" value="@Model.TripId" />
+                                    <button type="submit" class="btn btn-warning btn-lg shadow rounded-pill px-4 fw-bold">
+                                        ⏳ Join Waiting List
+                                    </button>
+                                </form>
+                                <p class="text-danger mt-2 fw-bold small">Fully booked! Join waiting list.</p>
+                            }
                         }
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="mt-5 pt-4">
+        <h3 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2 text-primary"></i>Customer Reviews</h3>
+
+        @if (Model.Reviews != null && Model.Reviews.Any())
+        {
+            @foreach (var review in Model.Reviews.OrderByDescending(r => r.PostedDate))
+            {
+                <div class="card mb-3 shadow-sm border-0 rounded-4 p-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1">@review.User?.FirstName @review.User?.LastName</h6>
+                                <div class="text-warning mb-2">
+                                    @for (int i = 0; i < review.Rating; i++)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    @for (int i = review.Rating; i < 5; i++)
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">@review.PostedDate.ToShortDateString()</small>
+
+                                @* Administrative Tool: Admin can delete any review *@
+                                @if (Context.Session.GetString("IsAdmin") == "true")
+                                {
+                                    <form asp-controller="Reviews" asp-action="Delete" method="post"
+                                          onsubmit="return confirm('Are you sure you want to delete this review?');" class="mt-2">
+                                        <input type="hidden" name="id" value="@review.ReviewId" />
+                                        <input type="hidden" name="tripId" value="@Model.TripId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                        <p class="card-text mt-2 text-dark">@review.Comment</p>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-4 bg-light rounded-4 border border-dashed">
+                <p class="text-muted mb-0 italic">No reviews yet. Be the first to share your experience!</p>
+            </div>
+        }
+
+        <hr class="my-5" />
+
+        @if (Context.Session.GetString("IsAdmin") == "true")
+        {
+            @* UI Policy: Admins cannot post reviews to ensure realistic data and site integrity *@
+            <div class="alert alert-secondary text-center rounded-4 shadow-sm border-0 p-4">
+                <i class="bi bi-shield-lock-fill fs-2 mb-2 d-block text-muted"></i>
+                <h5 class="fw-bold">Admin Mode</h5>
+                <p class="mb-0">You can manage and delete reviews, but posting new reviews is restricted for staff members.</p>
+            </div>
+        }
+        else if (Context.Session.GetString("UserId") != null)
+        {
+            @* User Submission Form: Only for logged-in regular users *@
+            <div class="card shadow-sm p-4 p-lg-5 rounded-4 bg-light border-0">
+                <h5 class="fw-bold mb-4">Share Your Experience</h5>
+                <form asp-controller="Reviews" asp-action="Create" method="post" id="reviewForm">
+                    <input type="hidden" name="TripId" value="@Model.TripId" />
+                    <input type="hidden" name="UserId" value="@Context.Session.GetString("UserId")" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Rating</label>
+                            <select name="Rating" class="form-select rounded-3" required>
+                                <option value="5">5 - Excellent ★★★★★</option>
+                                <option value="4">4 - Very Good ★★★★</option>
+                                <option value="3">3 - Good ★★★</option>
+                                <option value="2">2 - Fair ★★</option>
+                                <option value="1">1 - Poor ★</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">Your Feedback</label>
+                        <textarea name="Comment" class="form-control rounded-3" rows="4"
+                                  placeholder="Describe your trip details (Realistic feedback is appreciated)..."
+                                  required maxlength="500"></textarea>
+                    </div>
+                    <button type="submit" onclick="return checkAdmin()" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold">
+                        Post My Review
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            @* Guest View: Prompt to login *@
+            <div class="alert alert-info rounded-4 text-center shadow-sm p-4 border-0">
+                <h5 class="fw-bold">Want to leave a review?</h5>
+                <p>Please <a asp-controller="Account" asp-action="Login" class="fw-bold text-primary">Login</a> to share your thoughts about this trip.</p>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        /**
+         * Client-side validation to prevent Admins from posting reviews.
+         * Although the form is hidden, this acts as an extra layer of security.
+         */
+        function checkAdmin() {
+            // Fetch admin status from session (rendered as a string in JS)
+            const isAdmin = '@Context.Session.GetString("IsAdmin")';
+
+            if (isAdmin === "true") {
+                // Show immediate alert to the user
+                alert("Restricted Action: Admins are not allowed to post reviews to maintain site neutrality.");
+                return false; // Prevent form submission
+            }
+            return true; // Proceed with submission for regular users
+        }
+    </script>
+}
