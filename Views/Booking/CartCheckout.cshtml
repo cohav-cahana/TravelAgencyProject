@@ -70,16 +70,29 @@
                     </div>
                     <div class="row g-3">
                         <div class="col-12">
-                            <input type="text" class="form-control form-control-lg" placeholder="Card Number" required>
+                            <input type="text" name="cardNumber" class="form-control form-control-lg"
+                                   placeholder="Card Number" required
+                                   pattern="\d{16}" title="Please enter exactly 16 digits">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" class="form-control form-control-lg" placeholder="MM/YY" required>
+                            <input type="text" name="expiryDate" class="form-control form-control-lg"
+                                   placeholder="MM/YY" required
+                                   pattern="(0[1-9]|1[0-2])\/[2-9][0-9]" title="Please enter a valid expiry date (MM/YY)">
                         </div>
                         <div class="col-md-6">
-                            <input type="password" class="form-control form-control-lg" placeholder="CVV" required maxlength="3">
+                            <input type="password" name="cvv" class="form-control form-control-lg"
+                                   placeholder="CVV" required
+                                   pattern="\d{3}" title="CVV must be 3 digits" maxlength="3">
                         </div>
                     </div>
 
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger mt-3">
+                            @Html.ValidationSummary(false, "")
+                        </div>
+                    }
+                   
                     <button class="btn btn-primary btn-lg w-100 mt-4 py-3 fw-bold rounded-pill" type="submit">
                         CONFIRM & PAY NOW
                     </button>

@@ -6,6 +6,7 @@ using TravelAgencyProject.Services;
 
 namespace TravelAgencyProject.Controllers
 {
+    [RequireHttps]
     public class TripsController : Controller
     {
         private readonly EmailService _emailService;
@@ -387,7 +388,7 @@ namespace TravelAgencyProject.Controllers
         // Action to process the multiple bookings from the cart
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessCartBooking(int peopleCount)
+        public async Task<IActionResult> ProcessCartBooking(int peopleCount, string cardNumber, string expiryDate, string cvv)
         {
             var userIdString = HttpContext.Session.GetString("UserId");
             var cartJson = HttpContext.Session.GetString("Cart");
@@ -395,6 +396,38 @@ namespace TravelAgencyProject.Controllers
             if (string.IsNullOrEmpty(userIdString) || string.IsNullOrEmpty(cartJson))
             {
                 return RedirectToAction("Index");
+            }
+            if (string.IsNullOrEmpty(cardNumber) || cardNumber.Length < 16)
+            {
+                ModelState.AddModelError("", "Invalid Credit Card details.");
+                List<int> tripIdsForError = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+                var tripsInCart = await _context.Trips.Where(t => tripIdsForError.Contains(t.TripId)).ToListAsync();
+
+                return View("CartCheckout", tripsInCart);
+            }
+            if (string.IsNullOrEmpty(cvv) || cvv.Length != 3 || !cvv.All(char.IsDigit))
+            {
+                ModelState.AddModelError("", "CVV must be exactly 3 digits.");
+            }
+            if (!string.IsNullOrEmpty(expiryDate) && expiryDate.Contains("/"))
+            {
+                var parts = expiryDate.Split('/');
+                if (parts.Length == 2 && int.TryParse(parts[0], out int month) && int.TryParse(parts[1], out int year))
+                {
+                    var fullYear = 2000 + year;
+                    var expiryDateTime = new DateTime(fullYear, month, 1).AddMonths(1).AddDays(-1);
+                    if (expiryDateTime < DateTime.Now)
+                    {
+                        ModelState.AddModelError("", "The credit card has expired.");
+                    }
+                }
+                else { ModelState.AddModelError("", "Invalid expiry date format."); }
+            }
+            if (!ModelState.IsValid)
+            {
+                List<int> tripIdsForError = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+                var tripsInCart = await _context.Trips.Where(t => tripIdsForError.Contains(t.TripId)).ToListAsync();
+                return View("~/Views/Booking/CartCheckout.cshtml", tripsInCart);
             }
 
             int userId = int.Parse(userIdString);
