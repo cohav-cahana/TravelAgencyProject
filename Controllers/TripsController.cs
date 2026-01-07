@@ -128,6 +128,13 @@ namespace TravelAgencyProject.Controllers
         [HttpPost]
         public IActionResult BookTrip(int tripId)
         {
+            // --- ADMIN RESTRICTION ---
+            if (HttpContext.Session.GetString("IsAdmin") == "true")
+            {
+                TempData["Error"] = "Admins cannot book trips.";
+                return RedirectToAction("Index");
+            }
+            // --- LOGIN CHECK ---
             if (HttpContext.Session.GetString("Username") == null)
             {
                 return RedirectToAction("Login", "Account");
@@ -285,8 +292,14 @@ namespace TravelAgencyProject.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false) // Added bool parameter
+        public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false) 
         {
+            // --- SECURITY BLOCK FOR ADMINS ---
+            if (HttpContext.Session.GetString("IsAdmin") == "true")
+            {
+                TempData["Error"] = "Administrative accounts are not permitted to book trips.";
+                return RedirectToAction("Details", new { id = id });
+            }
             var cartJson = HttpContext.Session.GetString("Cart");
             List<int> cart = string.IsNullOrEmpty(cartJson)
                 ? new List<int>()
@@ -387,6 +400,12 @@ namespace TravelAgencyProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessCartBooking(int peopleCount, string cardNumber, string expiryDate, string cvv)
         {
+            // --- SERVER-SIDE SECURITY CHECK ---
+            if (HttpContext.Session.GetString("IsAdmin") == "true")
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             var userIdString = HttpContext.Session.GetString("UserId");
             var cartJson = HttpContext.Session.GetString("Cart");
 
