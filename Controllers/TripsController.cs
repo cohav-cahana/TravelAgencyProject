@@ -121,8 +121,19 @@ namespace TravelAgencyProject.Controllers
                 .FirstOrDefaultAsync(m => m.TripId == id);
 
             if (trip == null) return NotFound();
+
             var userIdStr = HttpContext.Session.GetString("UserId");
             int? userId = string.IsNullOrEmpty(userIdStr) ? null : int.Parse(userIdStr);
+
+            bool canLeaveReview = false;
+            if (userId.HasValue)
+            {
+                canLeaveReview = await _context.Bookings
+                    .AnyAsync(b => b.TripId == trip.TripId &&
+                                   b.UserId == userId.Value &&
+                                   b.bookingStatus != TripStatus.Cancelled);
+            }
+            ViewBag.CanLeaveReview = canLeaveReview;
 
             var first = await _context.WaitingLists
                 .Where(w => w.TripId == trip.TripId)
