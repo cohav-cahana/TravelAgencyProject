@@ -292,14 +292,21 @@ namespace TravelAgencyProject.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false) 
+        public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false, bool directPurchase = false)
         {
-            // --- SECURITY BLOCK FOR ADMINS ---
             if (HttpContext.Session.GetString("IsAdmin") == "true")
             {
                 TempData["Error"] = "Administrative accounts are not permitted to book trips.";
                 return RedirectToAction("Details", new { id = id });
             }
+
+            if (directPurchase)
+            {
+                var soloCart = new List<int> { id };
+                HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(soloCart));
+                return RedirectToAction("CartCheckout");
+            }
+
             var cartJson = HttpContext.Session.GetString("Cart");
             List<int> cart = string.IsNullOrEmpty(cartJson)
                 ? new List<int>()
@@ -315,21 +322,18 @@ namespace TravelAgencyProject.Controllers
                     .CountAsync(b => b.UserId == userId && b.bookingStatus == TripStatus.Upcoming);
             }
 
-            // Limit check
             if (activeBookingsCount + cart.Count >= 3)
             {
                 TempData["Error"] = "You can only have up to 3 active trips.";
                 return RedirectToAction("Index");
             }
 
-            // Add trip to cart if it's not already there (optional check)
             if (!cart.Contains(id))
             {
                 cart.Add(id);
                 HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
             }
 
-            // If "BOOK NOW" was clicked, go straight to Checkout
             if (goToCheckout)
             {
                 return RedirectToAction("CartCheckout");

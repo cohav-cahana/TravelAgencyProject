@@ -171,6 +171,8 @@
                                     <form asp-action="AddToCart" method="post" class="d-inline">
                                         <input type="hidden" name="id" value="@Model.TripId" />
                                         <input type="hidden" name="goToCheckout" value="true" />
+                                        <input type="hidden" name="directPurchase" value="true" />
+
                                         <button type="submit" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold">
                                             ✈️ BOOK NOW
                                         </button>
@@ -335,7 +337,6 @@
             const btn = this;
             const originalText = btn.innerHTML;
 
-            // שינוי מצב הכפתור בזמן יצירת ה-PDF
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Generating PDF...';
             btn.classList.add('disabled');
 
