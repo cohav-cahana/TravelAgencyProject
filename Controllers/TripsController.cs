@@ -276,10 +276,22 @@ namespace TravelAgencyProject.Controllers
             var userIdString = HttpContext.Session.GetString("UserId");
             if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account");
 
+            int userId = int.Parse(userIdString);
+
+            // prevent duplicates
+            bool alreadyInList = await _context.WaitingLists
+                .AnyAsync(w => w.TripId == tripId && w.UserId == userId);
+
+            if (alreadyInList)
+            {
+                TempData["SuccessMessage"] = "You are already in the waiting list for this trip.";
+                return RedirectToAction("CartCheckout");
+            }
+
             var entry = new WaitingList
             {
                 TripId = tripId,
-                UserId = int.Parse(userIdString),
+                UserId = userId,
                 RequestDate = DateTime.Now
             };
 
@@ -287,8 +299,7 @@ namespace TravelAgencyProject.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "You have been successfully added to the waiting list!";
-
-            return RedirectToAction("Index", "Trips");
+            return RedirectToAction("CartCheckout");
         }
 
         [HttpPost]
@@ -439,79 +450,145 @@ namespace TravelAgencyProject.Controllers
                 if (parts.Length == 2 && int.TryParse(parts[0], out int month) && int.TryParse(parts[1], out int year))
                 {
                     var fullYear = 2000 + year;
-                    var expiryDateTime = new DateTime(fullYear, month, 1).AddMonths(1).AddDays(-1);
-                    if (expiryDateTime < DateTime.Now)
+
+                    // prevent invalid month
+                    if (month < 1 || month > 12)
                     {
-                        ModelState.AddModelError("", "The credit card has expired.");
+                        ModelState.AddModelError("", "Invalid expiry date month.");
+                    }
+                    else
+                    {
+                        var expiryDateTime = new DateTime(fullYear, month, 1).AddMonths(1).AddDays(-1);
+                        if (expiryDateTime < DateTime.Now)
+                        {
+                            ModelState.AddModelError("", "The credit card has expired.");
+                        }
                     }
                 }
-                else { ModelState.AddModelError("", "Invalid expiry date format (MM/YY)."); }
+                else
+                {
+                    ModelState.AddModelError("", "Invalid expiry date format (MM/YY).");
+                }
             }
-            else { ModelState.AddModelError("", "Expiry date is required."); }
+            else
+            {
+                ModelState.AddModelError("", "Expiry date is required.");
+            }
 
             // If there are validation errors, return to the checkout view with trip details
             if (!ModelState.IsValid)
             {
                 List<int> tripIdsForError = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
-                var tripsInCart = await _context.Trips.Where(t => tripIdsForError.Contains(t.TripId)).ToListAsync();
+                var tripsInCart = await _context.Trips
+                    .Where(t => tripIdsForError.Contains(t.TripId))
+                    .ToListAsync();
+
                 return View("~/Views/Booking/CartCheckout.cshtml", tripsInCart);
             }
 
             int userId = int.Parse(userIdString);
             List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
             decimal totalOrderPrice = 0;
             List<string> destinationNames = new List<string>();
+
+            // ✅ Collect trips that were sold out due to concurrency (last spot taken)
+            List<int> soldOutTripIds = new List<int>();
+            Dictionary<int, string> soldOutTripNames = new Dictionary<int, string>();
+
+            // ✅ Transaction for the whole cart processing
+            await using var tx = await _context.Database.BeginTransactionAsync();
 
             // --- Processing Bookings ---
             foreach (var id in tripIds)
             {
-                var trip = await _context.Trips.FindAsync(id);
+                // Pull trip for name/price only (NOT for stock logic)
+                var trip = await _context.Trips
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.TripId == id);
 
-                if (trip != null && trip.Stock >= peopleCount)
+                if (trip == null)
+                    continue;
+
+                // Waiting list: only first user can book
+                var firstInWaitingList = await _context.WaitingLists
+                    .Where(w => w.TripId == id)
+                    .OrderBy(w => w.RequestDate)
+                    .FirstOrDefaultAsync();
+
+                if (firstInWaitingList != null && firstInWaitingList.UserId != userId)
                 {
-                    // Requirement Check: Is it the user's turn in the waiting list?
-                    var firstInWaitingList = await _context.WaitingLists
-                        .Where(w => w.TripId == id)
-                        .OrderBy(w => w.RequestDate)
-                        .FirstOrDefaultAsync();
-
-                    // If there's a waiting list, only the first person can book
-                    if (firstInWaitingList != null && firstInWaitingList.UserId != userId)
-                    {
-                        TempData["Error"] = $"Cannot book {trip.Destination}. There is a waiting list and it's not your turn.";
-                        continue;
-                    }
-
-                    decimal currentTripPrice = (trip.SalePrice ?? trip.Price) * peopleCount;
-
-                    var booking = new Booking
-                    {
-                        UserId = userId,
-                        TripId = id,
-                        PeopleCount = peopleCount,
-                        TotalPrice = currentTripPrice,
-                        BookingDate = DateTime.Now,
-                        PaymentStatus = PaymentStatus.Completed,
-                        bookingStatus = TripStatus.Upcoming
-                    };
-
-                    totalOrderPrice += currentTripPrice;
-                    destinationNames.Add(trip.Destination);
-
-                    // Important: Deduct the actual number of people from stock
-                    trip.Stock -= peopleCount;
-
-                    _context.Bookings.Add(booking);
-
-                    // If user was on waiting list for this trip, remove them
-                    if (firstInWaitingList != null && firstInWaitingList.UserId == userId)
-                    {
-                        _context.WaitingLists.Remove(firstInWaitingList);
-                    }
+                    TempData["Error"] = $"Cannot book {trip.Destination}. There is a waiting list and it's not your turn.";
+                    continue;
                 }
+
+                // ✅ ATOMIC STOCK DECREASE (prevents double booking of last spot)
+                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            UPDATE Trips
+            SET Stock = Stock - {peopleCount}
+            WHERE TripId = {id} AND Stock >= {peopleCount}
+        ");
+
+                // If no rows updated, there was not enough stock (someone else took the last one)
+                if (rowsAffected == 0)
+                {
+                    soldOutTripIds.Add(id);
+                    soldOutTripNames[id] = trip.Destination;
+                    continue;
+                }
+
+                // Create booking
+                decimal currentTripPrice = (trip.SalePrice ?? trip.Price) * peopleCount;
+
+                var booking = new Booking
+                {
+                    UserId = userId,
+                    TripId = id,
+                    PeopleCount = peopleCount,
+                    TotalPrice = currentTripPrice,
+                    BookingDate = DateTime.Now,
+                    PaymentStatus = PaymentStatus.Completed,
+                    bookingStatus = TripStatus.Upcoming
+                };
+
+                _context.Bookings.Add(booking);
+
+                // If the booking was allowed (and user was first), remove them from waiting list
+                if (firstInWaitingList != null && firstInWaitingList.UserId == userId)
+                {
+                    _context.WaitingLists.Remove(firstInWaitingList);
+                }
+
+                totalOrderPrice += currentTripPrice;
+                destinationNames.Add(trip.Destination);
+            }
+
+            // ✅ If some trips failed due to last-spot being taken, pass them to the checkout view
+            if (soldOutTripIds.Count > 0)
+            {
+                TempData["SoldOutTripIds"] = System.Text.Json.JsonSerializer.Serialize(soldOutTripIds);
+
+                // one full sentence message (what you asked for)
+                TempData["SoldOutMessage"] =
+                    "Some trips were just booked by another user (the last available spot was taken). Would you like to join the waiting list for those trips?";
+            }
+
+            // ✅ If nothing was booked successfully, rollback and return user to checkout
+            if (destinationNames.Count == 0)
+            {
+                await tx.RollbackAsync();
+
+                var tripsInCart = await _context.Trips
+                    .Where(t => tripIds.Contains(t.TripId))
+                    .ToListAsync();
+
+                // show message + allow waiting list joins
+                TempData["Error"] = "No bookings were completed because there is not enough availability.";
+                return View("~/Views/Booking/CartCheckout.cshtml", tripsInCart);
             }
 
             await _context.SaveChangesAsync();
+            await tx.CommitAsync();
 
             // --- Post-Processing ---
 
@@ -521,10 +598,16 @@ namespace TravelAgencyProject.Controllers
             {
                 try
                 {
-                    await _emailService.SendEmailAsync(user.Email, "Booking Confirmation",
-                        $"Hi {user.FirstName}, your booking for {string.Join(", ", destinationNames)} is confirmed!");
+                    await _emailService.SendEmailAsync(
+                        user.Email,
+                        "Booking Confirmation",
+                        $"Hi {user.FirstName}, your booking for {string.Join(", ", destinationNames)} is confirmed!"
+                    );
                 }
-                catch { /* Fail silently if email service is not configured */ }
+                catch
+                {
+                    // Fail silently if email service is not configured
+                }
             }
 
             // Create summary for the Confirmation View
@@ -539,5 +622,7 @@ namespace TravelAgencyProject.Controllers
             HttpContext.Session.Remove("Cart");
             return View("~/Views/Booking/Confirmation.cshtml", summaryBooking);
         }
+
+
     }
 }

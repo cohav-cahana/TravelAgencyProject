@@ -4,15 +4,26 @@
     ViewData["Title"] = "Cart Checkout";
     // Summing up prices for all trips in the cart
     decimal totalPricePerPerson = Model.Sum(t => t.SalePrice ?? t.Price);
+
+    // Read sold-out IDs from TempData (if exist)
+    List<int> soldOutIds = new List<int>();
+    if (TempData["SoldOutTripIds"] != null)
+    {
+        soldOutIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(
+            TempData["SoldOutTripIds"].ToString()
+        ) ?? new List<int>();
+    }
 }
 
 <div class="container py-5">
     <div class="row g-5">
+
         <div class="col-md-5 col-lg-4 order-md-last">
             <h4 class="d-flex justify-content-between align-items-center mb-3">
                 <span class="text-primary fw-bold">Order Summary</span>
                 <span class="badge bg-primary rounded-pill">@Model.Count()</span>
             </h4>
+
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
                 <ul class="list-group list-group-flush">
                     @foreach (var trip in Model)
@@ -34,6 +45,7 @@
                             <span id="summary-people">1</span>
                         </div>
                     </li>
+
                     <li class="list-group-item p-3 border-top border-primary">
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-bold fs-5">Total</span>
@@ -48,9 +60,70 @@
             <div class="card border-0 shadow-sm rounded-4 p-4 p-lg-5">
                 <h2 class="mb-4 fw-bold">Complete Your Booking</h2>
 
-                <form asp-controller="Trips" asp-action="ProcessCartBooking" method="post">
+                @* --- General messages --- *@
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger mt-3">
+                        @TempData["Error"]
+                    </div>
+                }
+
+                @if (TempData["Message"] != null)
+                {
+                    <div class="alert alert-success mt-3">
+                        @TempData["Message"]
+                    </div>
+                }
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success mt-3">
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
+
+                @* --- Sold out / last-spot-taken message + waiting list buttons --- *@
+                @if (TempData["SoldOutMessage"] != null && soldOutIds.Any())
+                {
+                    <div class="alert alert-warning mt-3">
+                        <div class="fw-bold">@TempData["SoldOutMessage"]</div>
+
+                        <div class="mt-3">
+                            @foreach (var trip in Model)
+                            {
+                                if (soldOutIds.Contains(trip.TripId))
+                                {
+                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center border rounded-3 p-3 mb-2 bg-white">
+                                        <div class="me-3">
+                                            <div>
+                                                The last available spot for <b>@trip.Destination</b> was taken.
+                                            </div>
+                                            <div class="text-muted small">
+                                                Do you want to join the waiting list for this trip?
+                                            </div>
+                                        </div>
+
+                                        <form asp-controller="Trips" asp-action="JoinWaitingList" method="post" class="mt-2 mt-md-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="tripId" value="@trip.TripId" />
+                                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                Yes, join waiting list
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+
+                <form id="checkoutForm" asp-controller="Trips" asp-action="ProcessCartBooking" method="post">
+                    @Html.AntiForgeryToken()
+
                     <div class="section-header mb-4">
-                        <h5 class="fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i> Travelers</h5>
+                        <h5 class="fw-bold">
+                            <i class="bi bi-people-fill me-2 text-primary"></i> Travelers
+                        </h5>
                     </div>
 
                     <div class="p-4 bg-light rounded-4 border mb-5">
@@ -66,19 +139,25 @@
                     </div>
 
                     <div class="section-header mb-4">
-                        <h5 class="fw-bold"><i class="bi bi-credit-card-2-back-fill me-2 text-primary"></i> Payment</h5>
+                        <h5 class="fw-bold">
+                            <i class="bi bi-credit-card-2-back-fill me-2 text-primary"></i> Payment
+                        </h5>
                     </div>
+
                     <div class="row g-3">
                         <div class="col-12">
                             <input type="text" name="cardNumber" class="form-control form-control-lg"
                                    placeholder="Card Number" required
                                    pattern="\d{16}" title="Please enter exactly 16 digits">
                         </div>
+
                         <div class="col-md-6">
                             <input type="text" name="expiryDate" class="form-control form-control-lg"
                                    placeholder="MM/YY" required
-                                   pattern="(0[1-9]|1[0-2])\/[2-9][0-9]" title="Please enter a valid expiry date (MM/YY)">
+                                   pattern="(0[1-9]|1[0-2])\/[2-9][0-9]"
+                                   title="Please enter a valid expiry date (MM/YY)">
                         </div>
+
                         <div class="col-md-6">
                             <input type="password" name="cvv" class="form-control form-control-lg"
                                    placeholder="CVV" required
@@ -92,8 +171,8 @@
                             @Html.ValidationSummary(false, "")
                         </div>
                     }
-                   
-                    <button class="btn btn-primary btn-lg w-100 mt-4 py-3 fw-bold rounded-pill" type="submit">
+
+                    <button id="confirmBtn" class="btn btn-primary btn-lg w-100 mt-4 py-3 fw-bold rounded-pill" type="submit">
                         CONFIRM & PAY NOW
                     </button>
                 </form>
@@ -110,10 +189,19 @@
         const pricePerPerson = @totalPricePerPerson;
 
         // JS Logic to update total price dynamically
-        peopleInput.addEventListener('input', function() {
+        peopleInput.addEventListener('input', function () {
             const count = Math.max(1, this.value);
             summaryPeople.innerText = count;
             summaryTotal.innerText = '$' + (count * pricePerPerson).toLocaleString();
+        });
+
+        // Prevent double submit
+        const form = document.getElementById('checkoutForm');
+        const btn = document.getElementById('confirmBtn');
+
+        form.addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.innerText = 'Processing...';
         });
     </script>
 }
