@@ -8,14 +8,17 @@
 }
 
 <style>
-    /* Admin dashboard card styling - subtle and professional */
+    :root {
+        --primary-blue: #007bff;
+        --star-color: #ffc107;
+    }
+
     .admin-trigger-card {
         background-color: #f0f7ff;
         border-left: 5px solid #007bff !important;
         margin-top: 20px;
     }
 
-    /* Original Page Styles */
     .hero-section {
         padding: 100px 0;
         background-color: #ffffff;
@@ -77,9 +80,33 @@
         margin-bottom: 20px;
         display: block;
     }
+
+    .testimonial-card {
+        border: none;
+        border-radius: 20px;
+        background: white;
+        transition: all 0.3s ease;
+        border-left: 5px solid var(--primary-blue);
+        text-align: left;
+    }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+        }
+
+    .quote-icon {
+        font-size: 2rem;
+        color: #e9ecef;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+
+    .text-warning {
+        color: var(--star-color) !important;
+    }
 </style>
 
-@* --- ADMIN SECTION: Visible only if IsAdmin session value is "true" --- *@
 @if (adminStatus == "true")
 {
     <div class="container">
@@ -90,7 +117,6 @@
                     <p class="text-muted mb-0">Scan bookings and send automated notifications for upcoming trips.</p>
                 </div>
 
-                @* This form triggers the SendReminders logic in BookingController *@
                 <form asp-controller="Booking" asp-action="SendReminders" method="post">
                     <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
                         <i class="fas fa-paper-plane me-2"></i> Send Reminders Now
@@ -99,7 +125,6 @@
             </div>
         </div>
 
-        @* Success message feedback after the Admin clicks the button *@
         @if (TempData["AdminMessage"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
@@ -110,7 +135,6 @@
     </div>
 }
 
-@* --- MAIN LANDING PAGE CONTENT --- *@
 <section class="hero-section">
     <div class="container">
         <h1 class="hero-title">Travel Beyond Limits</h1>
@@ -121,26 +145,88 @@
 
 <section class="py-5 mt-5">
     <div class="container">
-        <div class="row g-4">
+        <div class="row g-4 text-center">
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card h-100">
                     <span class="feature-icon">🌍</span>
                     <h4>Global Destinations</h4>
                     <p class="text-muted">From the Eiffel Tower to the Tokyo skyline, we cover the world.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card h-100">
                     <span class="feature-icon">💎</span>
                     <h4>Premium Quality</h4>
                     <p class="text-muted">We partner with the best hotels and guides to ensure your comfort.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card h-100">
                     <span class="feature-icon">🛡️</span>
                     <h4>Secure Booking</h4>
                     <p class="text-muted">Your data and payments are always protected with top-tier security.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">What Our <span class="text-primary">Travelers Say</span></h2>
+            <p class="text-muted">Real experiences from our global community</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card testimonial-card shadow-sm h-100 p-4">
+                    <div class="quote-icon"><i class="bi bi-quote"></i></div>
+                    <div class="text-warning mb-3">
+                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                    </div>
+                    <p class="fst-italic text-muted">"The trip to Tel Aviv was beyond my expectations. The nightlife and the beaches were stunning. Highly recommend this agency!"</p>
+                    <div class="d-flex align-items-center mt-auto pt-3 border-top">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">JS</div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Jonathan Smith</h6>
+                            <small class="text-primary">Visited Tel Aviv</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card testimonial-card shadow-sm h-100 p-4">
+                    <div class="quote-icon"><i class="bi bi-quote"></i></div>
+                    <div class="text-warning mb-3">
+                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                    </div>
+                    <p class="fst-italic text-muted">"Prague is a magical city. The tour guide provided by the agency was knowledgeable and made the history come alive."</p>
+                    <div class="d-flex align-items-center mt-auto pt-3 border-top">
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">MA</div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Maria Avram</h6>
+                            <small class="text-primary">Visited Prague</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card testimonial-card shadow-sm h-100 p-4">
+                    <div class="quote-icon"><i class="bi bi-quote"></i></div>
+                    <div class="text-warning mb-3">
+                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                    </div>
+                    <p class="fst-italic text-muted">"A spiritual and profound journey through Jerusalem. Everything was organized perfectly from start to finish."</p>
+                    <div class="d-flex align-items-center mt-auto pt-3 border-top">
+                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">DL</div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">David Levi</h6>
+                            <small class="text-primary">Visited Jerusalem</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
