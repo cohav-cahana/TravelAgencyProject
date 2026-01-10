@@ -22,35 +22,42 @@ namespace TravelAgencyProject.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TripId,UserId,Rating,Comment")] Review review)
+        public async Task<IActionResult> Create([Bind("TripId,Rating,Comment")] Review review, string returnTo = "Trip")
         {
-            // Security Check: Block Admins from posting reviews on the server side
-            if (HttpContext.Session.GetString("IsAdmin") == "true")
+            // Retrieve UserId as a String from session (Project default) and parse to Int
+            var userIdStr = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdStr))
             {
-                TempData["Error"] = "Admins are not allowed to post reviews.";
-                return RedirectToAction("Details", "Trips", new { id = review.TripId });
+                return RedirectToAction("Login", "Account");
             }
-            // 1. Manually set the posting date to now
+
+            // Set administrative fields
+            review.UserId = int.Parse(userIdStr);
             review.PostedDate = DateTime.Now;
 
-            // 2. Remove validation for properties we don't send from the form
+            // Remove navigation objects from validation to avoid False-Negative results
             ModelState.Remove("User");
             ModelState.Remove("Trip");
 
             if (ModelState.IsValid)
             {
-                // 3. Save the review to the database
                 _context.Add(review);
                 await _context.SaveChangesAsync();
 
-                // 4. CRITICAL: Redirect back to the Trip Details page
+                // Redirect back to Home if the review was submitted from the Confirmation page
+                if (returnTo == "Home")
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // Otherwise, redirect back to the specific trip details
                 return RedirectToAction("Details", "Trips", new { id = review.TripId });
             }
 
-            // If something fails, redirect back anyway with the error
-            TempData["Error"] = "Failed to post review. Please ensure all fields are correct.";
-            return RedirectToAction("Details", "Trips", new { id = review.TripId });
+            // Fallback redirect if validation fails
+            return RedirectToAction("Index", "Home");
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         // Only Admins are allowed to delete reviews to maintain site integrity

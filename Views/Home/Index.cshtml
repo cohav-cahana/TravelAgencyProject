@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
+@model IEnumerable<TravelAgencyProject.Models.Review>
 
 @{
     ViewData["Title"] = "Home Page";
@@ -140,6 +141,13 @@
         <h1 class="hero-title">Travel Beyond Limits</h1>
         <p class="hero-subtitle">Discover hand-picked destinations, exclusive deals, and unforgettable experiences tailored just for you.</p>
         <a asp-controller="Trips" asp-action="Index" class="btn-explore">Start Your Adventure</a>
+
+        @* --- PDF Requirement: Dynamic Trip Counter (Moved under the button) --- *@
+        <div class="mt-4">
+            <span class="text-uppercase fw-bold text-primary" style="letter-spacing: 2px; font-size: 0.9rem;">
+                @ViewBag.TotalTripsCount TRIPS AVAILABLE
+            </span>
+        </div>
     </div>
 </section>
 
@@ -229,6 +237,45 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+@* --- Service Testimonials Section --- *@
+<section class="py-5">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-5">What users think about our service</h2>
+
+        <div class="row">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var review in Model)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-0 shadow-sm p-4 testimonial-card">
+                            <div class="card-body">
+                                <div class="text-warning mb-3 h4">
+                                    @for (int i = 0; i < review.Rating; i++)
+                                    {
+                                        <span>★</span>
+                                    }
+                                </div>
+                                <p class="card-text fst-italic text-secondary">"@review.Comment"</p>
+                                <div class="mt-4 border-top pt-3">
+                                    <h6 class="fw-bold text-dark mb-0">@review.User?.FirstName @review.User?.LastName</h6>
+                                    <small class="text-primary text-uppercase">Verified Customer</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <p class="text-muted">No reviews available yet. Be the first to share your thoughts!</p>
+                </div>
+            }
         </div>
     </div>
 </section>
