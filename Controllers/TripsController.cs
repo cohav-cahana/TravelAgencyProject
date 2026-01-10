@@ -20,8 +20,8 @@ namespace TravelAgencyProject.Controllers
         }
         public IActionResult Index(string searchString, string category, string sortBy)
         {
-            var trips = from t in _context.Trips select t;
 
+            var trips = _context.Trips.Include(t => t.Reviews).AsQueryable();
             if (!string.IsNullOrEmpty(searchString))
             {
                 trips = trips.Where(s => s.Destination.Contains(searchString)
