@@ -121,6 +121,24 @@ namespace TravelAgencyProject.Controllers
                 .FirstOrDefaultAsync(m => m.TripId == id);
 
             if (trip == null) return NotFound();
+            var userIdStr = HttpContext.Session.GetString("UserId");
+            int? userId = string.IsNullOrEmpty(userIdStr) ? null : int.Parse(userIdStr);
+
+            var first = await _context.WaitingLists
+                .Where(w => w.TripId == trip.TripId)
+                .OrderBy(w => w.RequestDate)
+                .FirstOrDefaultAsync();
+
+            bool isInWaitingList = false;
+            if (userId.HasValue)
+            {
+                isInWaitingList = await _context.WaitingLists
+                    .AnyAsync(w => w.TripId == trip.TripId && w.UserId == userId.Value);
+            }
+
+            ViewBag.HasWaitingList = (first != null);
+            ViewBag.IsFirstInWaitingList = (first != null && userId.HasValue && first.UserId == userId.Value);
+            ViewBag.IsInWaitingList = isInWaitingList;
 
             return View(trip);
         }
@@ -301,13 +319,40 @@ namespace TravelAgencyProject.Controllers
             TempData["SuccessMessage"] = "You have been successfully added to the waiting list!";
             return RedirectToAction("CartCheckout");
         }
-
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false, bool directPurchase = false)
         {
+            // --- Admin restriction ---
             if (HttpContext.Session.GetString("IsAdmin") == "true")
             {
                 TempData["Error"] = "Administrative accounts are not permitted to book trips.";
+                return RedirectToAction("Details", new { id = id });
+            }
+
+            // --- Login check ---
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            int userId = int.Parse(userIdString);
+
+            // ✅ Waiting list rule:
+            // If there is a waiting list for this trip, ONLY the first user in line can book/add to cart.
+            var firstInWaitingList = await _context.WaitingLists
+                .Where(w => w.TripId == id)
+                .OrderBy(w => w.RequestDate)
+                .FirstOrDefaultAsync();
+
+            if (firstInWaitingList != null && firstInWaitingList.UserId != userId)
+            {
+                TempData["Error"] =
+                    "This trip currently has a waiting list. Only the first user in line can book right now. " +
+                    "If you want, you can join the waiting list and we will notify you when it's your turn.";
+
+                TempData["WaitingListTripId"] = id;
+
                 return RedirectToAction("Details", new { id = id });
             }
 
@@ -323,15 +368,8 @@ namespace TravelAgencyProject.Controllers
                 ? new List<int>()
                 : System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
 
-            var userIdString = HttpContext.Session.GetString("UserId");
-            int activeBookingsCount = 0;
-
-            if (!string.IsNullOrEmpty(userIdString))
-            {
-                int userId = int.Parse(userIdString);
-                activeBookingsCount = await _context.Bookings
-                    .CountAsync(b => b.UserId == userId && b.bookingStatus == TripStatus.Upcoming);
-            }
+            int activeBookingsCount = await _context.Bookings
+                .CountAsync(b => b.UserId == userId && b.bookingStatus == TripStatus.Upcoming);
 
             if (activeBookingsCount + cart.Count >= 3)
             {
@@ -353,6 +391,7 @@ namespace TravelAgencyProject.Controllers
             TempData["Message"] = "Trip added to your cart!";
             return RedirectToAction("Index");
         }
+
         [HttpPost]
         public IActionResult RemoveFromCart(int id)
         {
@@ -361,13 +400,12 @@ namespace TravelAgencyProject.Controllers
             {
                 var cart = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
 
-                // Remove the first instance of this trip ID
                 cart.Remove(id);
 
                 HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
             }
 
-            return Ok(); // Return 200 OK for AJAX
+            return Ok(); 
         }
 
 
