@@ -1,126 +1,301 @@
 ﻿@model TravelAgencyProject.Models.Trip
 
 @{
-    ViewData["Title"] = "Edit Trip";
+    ViewData["Title"] = "Edit Trip Package";
 }
 
-<div class="container mt-4">
-    <h1>Edit Trip Package</h1>
-    <hr />
-    <div class="row">
-        <div class="col-md-8">
-            <form asp-action="Edit" enctype="multipart/form-data">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <input type="hidden" asp-for="TripId" />
-                <input type="hidden" asp-for="ImageUrl" /> <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label asp-for="Destination" class="control-label fw-bold"></label>
-                        <input asp-for="Destination" class="form-control" />
-                        <span asp-validation-for="Destination" class="text-danger"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="Country" class="control-label fw-bold"></label>
-                        <input asp-for="Country" class="form-control" />
-                        <span asp-validation-for="Country" class="text-danger"></span>
-                    </div>
-                </div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-                <div class="mb-3">
-                    <label asp-for="Description" class="control-label fw-bold"></label>
-                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label asp-for="Category" class="control-label fw-bold"></label>
-                        <select asp-for="Category" class="form-select">
-                            <option value="">Select Category</option>
-                            <option value="Family">Family</option>
-                            <option value="Honeymoon">Honeymoon</option>
-                            <option value="Adventure">Adventure</option>
-                            <option value="Cruise">Cruise</option>
-                            <option value="Luxury">Luxury</option>
-                        </select>
-                        <span asp-validation-for="Category" class="text-danger"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="AgeLimitaion" class="control-label fw-bold"></label>
-                        <input asp-for="AgeLimitaion" class="form-control" />
-                        <span asp-validation-for="AgeLimitaion" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label asp-for="StartDate" class="control-label fw-bold"></label>
-                        <input asp-for="StartDate" class="form-control" type="date" />
-                        <span asp-validation-for="StartDate" class="text-danger"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="EndDate" class="control-label fw-bold"></label>
-                        <input asp-for="EndDate" class="form-control" type="date" />
-                        <span asp-validation-for="EndDate" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Stock" class="control-label fw-bold">Available Rooms</label>
-                    <input asp-for="Stock" class="form-control" />
-                    <span asp-validation-for="Stock" class="text-danger"></span>
-                </div>
-
-                <div class="card bg-light mb-3">
-                    <div class="card-header fw-bold">Pricing & Discounts</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label asp-for="Price" class="control-label fw-bold">Regular Price ($)</label>
-                            <input asp-for="Price" class="form-control" />
-                            <span asp-validation-for="Price" class="text-danger"></span>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label asp-for="SalePrice" class="control-label fw-bold text-success">Sale Price ($)</label>
-                                <input asp-for="SalePrice" class="form-control" placeholder="Leave empty if no sale" />
-                                <span asp-validation-for="SalePrice" class="text-danger"></span>
-                                <small class="text-muted">Must be lower than regular price.</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="DiscountEndDate" class="control-label fw-bold text-success">Sale Ends On</label>
-                                <input asp-for="DiscountEndDate" class="form-control" type="date" />
-                                <span asp-validation-for="DiscountEndDate" class="text-danger"></span>
-                                <small class="text-muted">Max 1 week from today.</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="control-label fw-bold">Trip Image</label>
-                    <div class="mb-2">
-                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
-                        {
-                            <img src="@Model.ImageUrl" alt="Current Image" style="max-width: 200px; border-radius: 5px;" />
-                            <p class="text-muted small">Current Image</p>
-                        }
-                    </div>
-                    <label asp-for="ImageFile" class="control-label">Change Image (Optional)</label>
-                    <input asp-for="ImageFile" class="form-control" type="file" accept="image/*" />
-                    <span asp-validation-for="ImageFile" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mt-4">
-                    <input type="submit" value="Save Changes" class="btn btn-primary" />
-                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-                </div>
-            </form>
+<div class="edit-page-wrapper py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Trips</a></li>
+                        <li class="breadcrumb-item active text-primary fw-bold" aria-current="page">Edit Package</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 fw-bold text-dark mb-0">Customize Trip Experience</h1>
+            </div>
+            <a asp-action="Index" class="btn btn-light border-0 shadow-sm px-4 py-2 rounded-pill transition-all">
+                <i class="fas fa-chevron-left me-2"></i> Back to Fleet
+            </a>
         </div>
+
+        <form asp-action="Edit" enctype="multipart/form-data" class="row g-4">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm rounded-4 mb-4"></div>
+            <input type="hidden" asp-for="TripId" />
+            <input type="hidden" asp-for="ImageUrl" />
+
+            <div class="col-lg-8">
+                <div class="glass-card shadow-sm rounded-4 p-4 mb-4 border-0">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="icon-shape bg-primary-soft text-primary me-3">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h5 class="fw-bold m-0">General Information</h5>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Destination" class="form-label small fw-bold text-uppercase text-muted ls-1">Destination</label>
+                            <input asp-for="Destination" class="form-control custom-input" placeholder="e.g. Santorini" />
+                            <span asp-validation-for="Destination" class="text-danger x-small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Country" class="form-label small fw-bold text-uppercase text-muted ls-1">Country</label>
+                            <input asp-for="Country" class="form-control custom-input" placeholder="e.g. Greece" />
+                            <span asp-validation-for="Country" class="text-danger x-small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label small fw-bold text-uppercase text-muted ls-1">Experience Description</label>
+                            <textarea asp-for="Description" class="form-control custom-input" rows="4" placeholder="Describe the magic..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger x-small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Category" class="form-label small fw-bold text-uppercase text-muted ls-1">Category</label>
+                            <select asp-for="Category" class="form-select custom-input">
+                                <option value="Family">Family</option>
+                                <option value="Honeymoon">Honeymoon</option>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Cruise">Cruise</option>
+                                <option value="Luxury">Luxury</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="AgeLimitaion" class="form-label small fw-bold text-uppercase text-muted ls-1">Age Restriction</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0 border-custom"><i class="fas fa-user-clock text-muted"></i></span>
+                                <input asp-for="AgeLimitaion" class="form-control custom-input border-start-0" placeholder="e.g. All ages" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card shadow-sm rounded-4 p-4 border-0">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="icon-shape bg-info-soft text-info me-3">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h5 class="fw-bold m-0">Availability & Timing</h5>
+                    </div>
+                    <div class="row g-3 text-center text-md-start">
+                        <div class="col-md-4">
+                            <label asp-for="StartDate" class="form-label small fw-bold text-muted">START DATE</label>
+                            <input asp-for="StartDate" class="form-control custom-input" type="date" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="EndDate" class="form-label small fw-bold text-muted">END DATE</label>
+                            <input asp-for="EndDate" class="form-control custom-input" type="date" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Stock" class="form-label small fw-bold text-muted">ROOMS LEFT</label>
+                            <div class="stock-badge shadow-sm">
+                                <input asp-for="Stock" class="form-control text-center fw-bold border-0 bg-transparent" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="price-card bg-gradient-primary rounded-4 p-4 mb-4 shadow-lg border-0 text-white overflow-hidden position-relative">
+                    <div class="position-relative z-1">
+                        <h5 class="fw-bold mb-4 opacity-75">Pricing Engine</h5>
+                        <div class="price-input-group mb-4">
+                            <label asp-for="Price" class="x-small fw-bold ls-1 d-block mb-1">STANDARD PRICE</label>
+                            <div class="d-flex align-items-baseline">
+                                <span class="h4 mb-0 me-1">$</span>
+                                <input asp-for="Price" class="price-ghost-input h2 mb-0 fw-bold" />
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6 border-end border-white border-opacity-25">
+                                <label asp-for="SalePrice" class="x-small fw-bold d-block mb-1 opacity-75 text-uppercase">Sale Price</label>
+                                <input asp-for="SalePrice" class="price-ghost-input-sm fw-bold w-100" />
+                            </div>
+                            <div class="col-6 ps-3">
+                                <label asp-for="DiscountEndDate" class="x-small fw-bold d-block mb-1 opacity-75 text-uppercase">Sale Ends</label>
+                                <input asp-for="DiscountEndDate" type="date" class="price-ghost-input-sm w-100 small" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="circle-decoration"></div>
+                </div>
+
+                <div class="glass-card shadow-sm rounded-4 p-3 border-0 mb-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-3 px-1">Visual Preview</label>
+                    <div class="preview-box rounded-3 mb-3 position-relative overflow-hidden shadow-inner">
+                        <img id="imagePreview" src="@Model.ImageUrl" class="img-fluid w-100 h-100 object-fit-cover shadow" style="min-height: 200px;" alt="Trip image" />
+                        <div class="preview-overlay">
+                            <label for="imageUpload" class="btn btn-sm btn-light rounded-pill shadow-sm">
+                                <i class="fas fa-camera me-1"></i> Change
+                            </label>
+                        </div>
+                    </div>
+                    <input asp-for="ImageFile" id="imageUpload" class="form-control d-none" type="file" accept="image/*" />
+                </div>
+
+                <button type="submit" class="btn btn-primary-gradient w-100 py-3 rounded-4 shadow-primary fw-bold transition-all fs-5">
+                    <i class="fas fa-cloud-upload-alt me-2"></i> Update Trip Details
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0045b5 100%);
+        --soft-blue: #f0f5ff;
+        --border-color: #e2e8f0;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .ls-1 {
+        letter-spacing: 0.5px;
+    }
+
+    .x-small {
+        font-size: 0.75rem;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .glass-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+    }
+
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.25rem;
+    }
+
+    .bg-primary-soft {
+        background-color: var(--soft-blue);
+    }
+
+    .bg-info-soft {
+        background-color: #e0f7fa;
+    }
+
+    .custom-input {
+        border: 2px solid #f1f5f9;
+        background-color: #f8fafc;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.2s;
+    }
+
+        .custom-input:focus {
+            border-color: #0d6efd;
+            background-color: #fff;
+            box-shadow: none;
+        }
+
+    .border-custom {
+        border: 2px solid #f1f5f9;
+    }
+
+    .bg-gradient-primary {
+        background: var(--primary-gradient);
+    }
+
+    .price-ghost-input {
+        background: transparent;
+        border: none;
+        color: white;
+        width: 100%;
+        outline: none;
+    }
+
+    .price-ghost-input-sm {
+        background: transparent;
+        border: none;
+        color: white;
+        outline: none;
+        font-size: 1.1rem;
+    }
+
+    .circle-decoration {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        top: -50px;
+        right: -50px;
+    }
+
+    .stock-badge {
+        background: #fff;
+        border-radius: 12px;
+        border: 2px solid #f1f5f9;
+        overflow: hidden;
+    }
+
+    .preview-box:hover .preview-overlay {
+        opacity: 1;
+    }
+
+    .preview-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .btn-primary-gradient {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+    }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(13, 110, 253, 0.3);
+            color: white;
+        }
+
+    .shadow-primary {
+        box-shadow: 0 4px 14px 0 rgba(13, 110, 253, 0.39);
+    }
+</style>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.getElementById('imageUpload').onchange = function (evt) {
+            const [file] = this.files;
+            if (file) {
+                const preview = document.getElementById('imagePreview');
+                preview.src = URL.createObjectURL(file);
+                preview.style.opacity = '0';
+                setTimeout(() => { preview.style.opacity = '1'; }, 50);
+            }
+        }
+    </script>
 }
