@@ -1,1 +1,40 @@
-﻿
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">System Management - Travel Agency</h1>
+
+    <div class="row text-center">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Trips</h5>
+                    <p class="card-text">Add, edit, and delete vacation packages.</p>
+                    <a asp-controller="Trips" asp-action="Index" class="btn btn-primary">Go to Trip Management</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Users</h5>
+                    <p class="card-text">View users, check booking history, and remove accounts.</p>
+                    <a asp-controller="Admin" asp-action="Users" class="btn btn-success">Go to User Management</a>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Waiting Lists</h5>
+                    <p class="card-text">View and manage customers waiting for a spot.</p>
+                    <a asp-controller="Admin" asp-action="WaitingList" class="btn btn-warning">View Waiting List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,50 @@
+﻿@model IEnumerable<TravelAgencyProject.Models.Booking>
+
+@{
+    ViewData["Title"] = "User Bookings";
+}
+
+<div class="container mt-4">
+    <h2>Bookings for: @ViewBag.UserName</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No bookings found for this user.</div>
+    }
+    else
+    {
+        <table class="table table-striped mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>Destination</th>
+                    <th>Departure Date</th>
+                    <th>Price Paid</th>
+                    <th>Payment Status</th>
+                    <th>Trip Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Trip?.Destination</td>
+                        <td>@item.Trip?.StartDate.ToShortDateString()</td>
+                        <td>@item.TotalPrice.ToString("C")</td>
+                        <td>
+                            <span class="badge @(item.PaymentStatus == TravelAgencyProject.Models.PaymentStatus.Completed ? "bg-success" : "bg-warning")">
+                                @item.PaymentStatus
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @(item.bookingStatus == TravelAgencyProject.Models.TripStatus.Cancelled ? "bg-danger" : "bg-info")">
+                                @item.bookingStatus
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <a asp-action="Users" class="btn btn-secondary">Back to User List</a>
+</div>
