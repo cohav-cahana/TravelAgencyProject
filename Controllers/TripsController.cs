@@ -18,10 +18,12 @@ namespace TravelAgencyProject.Controllers
             _webHostEnvironment = webHostEnvironment;
             _emailService = emailService;
         }
-        public IActionResult Index(string searchString, string category, string sortBy)
+        public IActionResult Index(string searchString, string category, string sortBy, bool onlySales)
         {
-
+            // Start with a query including Reviews for the popularity sort (average rating)
             var trips = _context.Trips.Include(t => t.Reviews).AsQueryable();
+
+            // --- 1. SEARCH FILTERING ---
             if (!string.IsNullOrEmpty(searchString))
             {
                 trips = trips.Where(s => s.Destination.Contains(searchString)
@@ -30,22 +32,36 @@ namespace TravelAgencyProject.Controllers
                                       || s.Description.Contains(searchString));
             }
 
+            // --- 2. CATEGORY FILTERING ---
             if (!string.IsNullOrEmpty(category))
             {
                 trips = trips.Where(t => t.Category == category);
             }
 
+            // --- 3. SALES FILTERING ---
+            // Only shows trips with a valid SalePrice and an active discount end date
+            if (onlySales)
+            {
+                trips = trips.Where(t => t.SalePrice != null && t.DiscountEndDate >= DateTime.Now);
+            }
+
+            // --- 4. SORTING LOGIC ---
             trips = sortBy switch
             {
-                "price_asc" => trips.OrderBy(t => t.SalePrice ?? t.Price), 
-                "price_desc" => trips.OrderByDescending(t => t.SalePrice ?? t.Price), 
-                "destination" => trips.OrderBy(t => t.Destination), 
-                _ => trips.OrderBy(t => t.StartDate) 
+                "price_asc" => trips.OrderBy(t => t.SalePrice ?? t.Price),
+                "price_desc" => trips.OrderByDescending(t => t.SalePrice ?? t.Price),
+                "destination" => trips.OrderBy(t => t.Destination),
+                // Sort by average review rating. If no reviews exist, treat rating as 0.
+                "popularity" => trips.OrderByDescending(t => t.Reviews.Any() ? t.Reviews.Average(r => r.Rating) : 0),
+                // Default sort: by start date (soonest first)
+                _ => trips.OrderBy(t => t.StartDate)
             };
 
+            // Keep data for the UI to remember what the user selected
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentCategory"] = category;
             ViewData["CurrentSort"] = sortBy;
+            ViewData["OnlySales"] = onlySales;
 
             return View(trips.ToList());
         }

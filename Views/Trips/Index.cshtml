@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<TravelAgencyProject.Models.Trip>
+@using Microsoft.AspNetCore.Http
 
 @{
     ViewData["Title"] = "Trip Gallery";
@@ -167,32 +168,39 @@
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-2 col-md-6">
                 <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Category</label>
                 <select name="category" class="form-select bg-light border-0">
                     <option value="">All Categories</option>
-                    <option value="Family">Family</option>
-                    <option value="Honeymoon">Honeymoon</option>
-                    <option value="Adventure">Adventure</option>
-                    <option value="Cruise">Cruise</option>
-                    <option value="Luxury">Luxury</option>
-                    <option value="History">History</option>
-                    <option value="City Break">City Break</option>
+                    <option value="Family" selected="@(ViewData["CurrentCategory"]?.ToString() == "Family")">Family</option>
+                    <option value="Honeymoon" selected="@(ViewData["CurrentCategory"]?.ToString() == "Honeymoon")">Honeymoon</option>
+                    <option value="Adventure" selected="@(ViewData["CurrentCategory"]?.ToString() == "Adventure")">Adventure</option>
+                    <option value="Cruise" selected="@(ViewData["CurrentCategory"]?.ToString() == "Cruise")">Cruise</option>
+                    <option value="Luxury" selected="@(ViewData["CurrentCategory"]?.ToString() == "Luxury")">Luxury</option>
+                    <option value="History" selected="@(ViewData["CurrentCategory"]?.ToString() == "History")">History</option>
+                    <option value="City Break" selected="@(ViewData["CurrentCategory"]?.ToString() == "City Break")">City Break</option>
                 </select>
             </div>
 
-            <div class="col-lg-4 col-md-8">
+            <div class="col-lg-3 col-md-6">
                 <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Sort By</label>
                 <select name="sortBy" class="form-select bg-light border-0">
-                    <option value="date">Travel Date (Soonest First)</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="popularity">Most Popular</option>
-                    <option value="destination">A-Z Destination</option>
+                    <option value="date" selected="@(ViewData["CurrentSort"]?.ToString() == "date")">Travel Date</option>
+                    <option value="price_asc" selected="@(ViewData["CurrentSort"]?.ToString() == "price_asc")">Price: Low to High</option>
+                    <option value="price_desc" selected="@(ViewData["CurrentSort"]?.ToString() == "price_desc")">Price: High to Low</option>
+                    <option value="popularity" selected="@(ViewData["CurrentSort"]?.ToString() == "popularity")">Most Popular</option>
+                    <option value="destination" selected="@(ViewData["CurrentSort"]?.ToString() == "destination")">A-Z Destination</option>
                 </select>
             </div>
 
-            <div class="col-lg-2 col-md-4">
+            <div class="col-lg-2 col-md-6 mb-2">
+                <div class="form-check">
+                    <input type="checkbox" name="onlySales" value="true" class="form-check-input" id="onlySales" @(ViewData["OnlySales"] != null && (bool)ViewData["OnlySales"] ? "checked" : "") />
+                    <label class="form-check-label fw-bold text-danger small" for="onlySales">🔥 ONLY SALES</label>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-12">
                 <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Filter</button>
             </div>
         </form>
@@ -208,7 +216,7 @@
                         <span class="badge category-badge">@item.Category</span>
 
                         <div class="add-cart-wrapper">
-                            <form asp-action="AddToCart" asp-route-id="@item.TripId" method="post">
+                            <form asp-action="AddToCart" asp-controller="Booking" asp-route-id="@item.TripId" method="post">
                                 <button type="submit" class="btn btn-add-circle" title="Add to Cart">
                                     <i class="bi bi-cart-plus fs-5"></i>
                                 </button>
@@ -216,7 +224,7 @@
                         </div>
                     </div>
 
-                    <div class="card-body p-4 pt-5">
+                    <div class="card-body p-4 pt-5 d-flex flex-column">
                         <div class="mb-2">
                             @if (item.Reviews != null && item.Reviews.Any())
                             {
@@ -224,16 +232,9 @@
                                 <div class="rating-stars d-flex align-items-center">
                                     @for (int i = 1; i <= 5; i++)
                                     {
-                                        if (i <= Math.Round(avgRating))
-                                        {
-                                            <i class="bi bi-star-fill me-1"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-star text-muted me-1"></i>
-                                        }
+                                        <i class="bi @(i <= Math.Round(avgRating) ? "bi-star-fill" : "bi-star text-muted") me-1"></i>
                                     }
-                                    <span class="text-muted small ms-1">(@avgRating.ToString("0.0"))</span>
+                                    <span class="text-muted small ms-1">(@avgRating.ToString("0.1"))</span>
                                 </div>
                             }
                             else
