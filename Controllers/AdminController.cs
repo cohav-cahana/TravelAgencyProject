@@ -54,6 +54,35 @@ namespace TravelAgencyProject.Controllers
             }
             return RedirectToAction(nameof(Users));
         }
+        // GET: Admin/CreateUser
+        public IActionResult CreateUser()
+        {
+            if (HttpContext.Session.GetString("IsAdmin") != "true") return RedirectToAction("Login", "Account");
+            return View();
+        }
+
+        // POST: Admin/CreateUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateUser(User user)
+        {
+            if (HttpContext.Session.GetString("IsAdmin") != "true") return RedirectToAction("Login", "Account");
+
+            if (ModelState.IsValid)
+            {
+                // Check for unique email
+                if (await _context.Users.AnyAsync(u => u.Email == user.Email))
+                {
+                    ModelState.AddModelError("Email", "Email already exists.");
+                    return View(user);
+                }
+
+                _context.Add(user);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Users));
+            }
+            return View(user);
+        }
         public async Task<IActionResult> WaitingList()
         {
             //Check if admin is logged in

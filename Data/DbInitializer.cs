@@ -64,7 +64,7 @@ namespace TravelAgencyProject.Data
 
             foreach (var t in trips)
             {
-                if (!context.Trips.Any(x => x.Destination == t.Destination && x.StartDate == t.StartDate))
+                if (!context.Trips.Any(x => x.Destination == t.Destination))
                 {
                     context.Trips.Add(t);
                 }
