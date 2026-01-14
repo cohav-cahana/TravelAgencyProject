@@ -92,6 +92,7 @@
         justify-content: center;
         box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         transition: all 0.3s ease;
+        cursor: pointer;
     }
 
         .btn-add-circle:hover {
@@ -172,13 +173,10 @@
                 <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Category</label>
                 <select name="category" class="form-select bg-light border-0">
                     <option value="">All Categories</option>
-                    <option value="Family" selected="@(ViewData["CurrentCategory"]?.ToString() == "Family")">Family</option>
-                    <option value="Honeymoon" selected="@(ViewData["CurrentCategory"]?.ToString() == "Honeymoon")">Honeymoon</option>
-                    <option value="Adventure" selected="@(ViewData["CurrentCategory"]?.ToString() == "Adventure")">Adventure</option>
-                    <option value="Cruise" selected="@(ViewData["CurrentCategory"]?.ToString() == "Cruise")">Cruise</option>
-                    <option value="Luxury" selected="@(ViewData["CurrentCategory"]?.ToString() == "Luxury")">Luxury</option>
-                    <option value="History" selected="@(ViewData["CurrentCategory"]?.ToString() == "History")">History</option>
-                    <option value="City Break" selected="@(ViewData["CurrentCategory"]?.ToString() == "City Break")">City Break</option>
+                    @foreach (var cat in new[] { "Family", "Honeymoon", "Adventure", "Cruise", "Luxury", "History", "City Break" })
+                    {
+                        <option value="@cat" selected="@(ViewData["CurrentCategory"]?.ToString() == cat)">@cat</option>
+                    }
                 </select>
             </div>
 
@@ -216,7 +214,8 @@
                         <span class="badge category-badge">@item.Category</span>
 
                         <div class="add-cart-wrapper">
-                            <form asp-action="AddToCart" asp-controller="Booking" asp-route-id="@item.TripId" method="post">
+                            <form asp-action="AddToCart" asp-controller="Trips" method="post">
+                                <input type="hidden" name="id" value="@item.TripId" />
                                 <button type="submit" class="btn btn-add-circle" title="Add to Cart">
                                     <i class="bi bi-cart-plus fs-5"></i>
                                 </button>
