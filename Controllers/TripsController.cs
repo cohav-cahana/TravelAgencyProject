@@ -287,7 +287,6 @@ namespace TravelAgencyProject.Controllers
             return View(trip);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelBooking(int id)
@@ -296,26 +295,28 @@ namespace TravelAgencyProject.Controllers
                 .Include(b => b.Trip)
                 .FirstOrDefaultAsync(b => b.BookingId == id);
 
-            if (booking == null) return NotFound();
+            if (booking == null || booking.Trip == null) return NotFound();
+
+            int allowedHours = booking.Trip.CancellationDeadlineHours > 0
+                               ? booking.Trip.CancellationDeadlineHours
+                               : 24;
 
             var timeUntilTrip = booking.Trip.StartDate - DateTime.Now;
 
-            if (timeUntilTrip.TotalHours < 24)
+            if (timeUntilTrip.TotalHours < allowedHours)
             {
-                TempData["ErrorMessage"] = "Cancellation failed: You cannot cancel a trip less than 24 hours before departure.";
+                TempData["ErrorMessage"] = $"Cancellation failed: This trip can only be cancelled up to {allowedHours} hours before departure.";
                 return RedirectToAction("Index", "Booking");
             }
 
-            if (booking.Trip != null)
-            {
-              booking.Trip.Stock += booking.PeopleCount;
-                _context.Update(booking.Trip);
-            }
+            booking.Trip.Stock += booking.PeopleCount;
+            _context.Update(booking.Trip);
 
             booking.bookingStatus = TripStatus.Cancelled;
+
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Your booking has been successfully cancelled and the seats are released.";
+            TempData["SuccessMessage"] = $"Your booking has been successfully cancelled. {booking.PeopleCount} seats have been returned to stock.";
 
             return RedirectToAction("Index", "Booking");
         }
