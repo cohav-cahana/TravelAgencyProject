@@ -354,6 +354,7 @@ namespace TravelAgencyProject.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Route("Booking/AddToCart/{id}")]
         public async Task<IActionResult> AddToCart(int id, bool goToCheckout = false, bool directPurchase = false)
         {
             // --- Admin restriction ---
