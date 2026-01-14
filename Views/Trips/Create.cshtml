@@ -65,13 +65,22 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label asp-for="Stock" class="form-label font-weight-bold">Available Rooms (Stock)</label>
-                        <input asp-for="Stock" class="form-control" type="number" />
+                        <input asp-for="Stock" class="form-control" type="number" min="0" />
                         <span asp-validation-for="Stock" class="text-danger"></span>
                     </div>
-                </div>
 
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CancellationDeadlineHours" class="form-label font-weight-bold">Cancellation Deadline (Hours)</label>
+                        <div class="input-group">
+                            <input asp-for="CancellationDeadlineHours" class="form-control" type="number" min="0" placeholder="e.g. 24" />
+                            <span class="input-group-text bg-light">hrs</span>
+                        </div>
+                        <small class="text-muted">Users cannot cancel less than X hours before start date.</small>
+                        <span asp-validation-for="CancellationDeadlineHours" class="text-danger"></span>
+                    </div>
+                </div>
  
 
                 <div class="row">

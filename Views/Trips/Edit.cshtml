@@ -82,19 +82,27 @@
                         <h5 class="fw-bold m-0">Availability & Timing</h5>
                     </div>
                     <div class="row g-3 text-center text-md-start">
-                        <div class="col-md-4">
-                            <label asp-for="StartDate" class="form-label small fw-bold text-muted">START DATE</label>
+                        <div class="col-md-3">
+                            <label asp-for="StartDate" class="form-label x-small fw-bold text-muted text-uppercase">Start Date</label>
                             <input asp-for="StartDate" class="form-control custom-input" type="date" />
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="EndDate" class="form-label small fw-bold text-muted">END DATE</label>
+                        <div class="col-md-3">
+                            <label asp-for="EndDate" class="form-label x-small fw-bold text-muted text-uppercase">End Date</label>
                             <input asp-for="EndDate" class="form-control custom-input" type="date" />
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="Stock" class="form-label small fw-bold text-muted">ROOMS LEFT</label>
+                        <div class="col-md-3">
+                            <label asp-for="Stock" class="form-label x-small fw-bold text-muted text-uppercase">Rooms Left</label>
                             <div class="stock-badge shadow-sm">
                                 <input asp-for="Stock" class="form-control text-center fw-bold border-0 bg-transparent" />
                             </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="CancellationDeadlineHours" class="form-label x-small fw-bold text-primary text-uppercase">Cancel Window</label>
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                                <input asp-for="CancellationDeadlineHours" class="form-control custom-input text-center fw-bold border-0" type="number" min="0" />
+                                <span class="input-group-text bg-white border-0 small text-muted px-2">hrs</span>
+                            </div>
+                            <span asp-validation-for="CancellationDeadlineHours" class="text-danger x-small"></span>
                         </div>
                     </div>
                 </div>

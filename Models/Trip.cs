@@ -63,6 +63,9 @@ namespace TravelAgencyProject.Models
         public int? AgeLimitaion { get; set; }
         public bool IsVisible { get; set; } = true;
 
+        [Display(Name = "Cancellation Deadline (Hours)")]
+        public int CancellationDeadlineHours { get; set; } = 24;
+
         // Navigation property for reviews associated with this trip
         public List<Review> Reviews { get; set; } = new List<Review>();
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
