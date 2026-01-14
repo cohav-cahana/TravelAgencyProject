@@ -19,6 +19,7 @@ namespace TravelAgencyProject.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // --- Authentication Check ---
             var userIdString = HttpContext.Session.GetString("UserId");
             if (string.IsNullOrEmpty(userIdString))
             {
@@ -27,18 +28,28 @@ namespace TravelAgencyProject.Controllers
 
             int userId = int.Parse(userIdString);
 
+            // Fetch all bookings for this user, including the trip details
             var allBookings = await _context.Bookings
                 .Include(b => b.Trip)
                 .Where(b => b.UserId == userId)
                 .OrderByDescending(b => b.Trip.StartDate)
                 .ToListAsync();
 
-            var upcomingBookings = allBookings.Where(b => b.Trip.StartDate >= DateTime.Today).ToList();
-            var pastBookings = allBookings.Where(b => b.Trip.StartDate < DateTime.Today).ToList();
+            // Separate Cancelled Bookings first ---
+            // We take all bookings where status is Cancelled
+            var cancelledBookings = allBookings.Where(b => b.bookingStatus == TripStatus.Cancelled).ToList();
 
+            // Now filter the REMAINING bookings (not cancelled) by date
+            var activeBookings = allBookings.Where(b => b.bookingStatus != TripStatus.Cancelled);
+
+            var upcomingBookings = activeBookings.Where(b => b.Trip.StartDate >= DateTime.Today).ToList();
+            var pastBookings = activeBookings.Where(b => b.Trip.StartDate < DateTime.Today).ToList();
+
+            // --- Passing data to the View ---
             ViewBag.PastBookings = pastBookings;
+            ViewBag.CancelledBookings = cancelledBookings; // Adding the cancelled trips to ViewBag
 
-            return View(upcomingBookings);
+            return View(upcomingBookings); 
         }
         public async Task<IActionResult> AdminWaitingList()
         {

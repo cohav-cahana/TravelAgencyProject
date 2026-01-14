@@ -1,269 +1,356 @@
 ﻿@model IEnumerable<TravelAgencyProject.Models.Booking>
 
-    @{
+@{
     ViewData["Title"] = "My Bookings";
-    var pastBookings = ViewBag.PastBookings as List<TravelAgencyProject.Models.Booking>;
 
-    // סינון: מציגים רק טיולים פעילים (לא מבוטלים) ברשימה הראשית
+    // Extracting different booking categories from ViewBag and Model
+    var pastBookings = ViewBag.PastBookings as List<TravelAgencyProject.Models.Booking>;
+    var cancelledBookings = ViewBag.CancelledBookings as List<TravelAgencyProject.Models.Booking>;
+
+    // Filter active bookings (upcoming and not cancelled)
     var activeBookings = Model?.Where(b => b.bookingStatus != TravelAgencyProject.Models.TripStatus.Cancelled).ToList()
                          ?? new List<TravelAgencyProject.Models.Booking>();
+}
+
+@* --- CSS Styles --- *@
+<style>
+    :root {
+        --primary-blue: #0066ff;
+        --soft-bg: #f8f9fa;
     }
 
-    @* --- Optimized Styles --- *@
-    <style>
-        :root {
-            --primary-blue: #0066ff;
-            --soft-bg: #f8f9fa;
+    body {
+        background-color: var(--soft-bg);
+    }
+
+    .booking-card {
+        transition: all 0.3s ease;
+        border: none;
+        background: #fff;
+    }
+
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
         }
 
-        body {
-            background-color: var(--soft-bg);
+    .trip-image {
+        height: 100%;
+        min-height: 200px;
+        object-fit: cover;
+    }
+
+    .countdown-timer {
+        font-family: 'Segoe UI Mono', monospace;
+        letter-spacing: 1px;
+        font-size: 1rem;
+        background: #f8f9fa;
+        padding: 8px 15px;
+        border-radius: 50px;
+        border: 1px solid #dee2e6;
+        display: inline-block;
+    }
+
+    .text-danger.animate-pulse {
+        animation: pulse-red 2s infinite;
+        background: #fff5f5;
+        border-color: #feb2b2;
+    }
+
+    @@keyframes pulse-red {
+        0%, 100% {
+            opacity: 1;
         }
 
-        .booking-card {
-            transition: all 0.3s ease;
-            border: none;
-            background: #fff;
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    .status-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 10;
+    }
+
+    .alert-custom {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    /* Styles for the Tab Navigation */
+    .nav-pills .nav-link {
+        color: #6c757d;
+        font-weight: 600;
+        padding: 10px 25px;
+        border-radius: 50px;
+        transition: 0.3s;
+    }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-blue);
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.2);
         }
 
-            .booking-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-            }
+    .nav-link.text-cancelled.active {
+        background-color: #dc3545 !important;
+    }
+</style>
 
-        .trip-image {
-            height: 100%;
-            min-height: 200px;
-            object-fit: cover;
-        }
-
-        .countdown-timer {
-            font-family: 'Segoe UI Mono', monospace;
-            letter-spacing: 1px;
-            font-size: 1rem;
-            background: #f8f9fa;
-            padding: 8px 15px;
-            border-radius: 50px;
-            border: 1px solid #dee2e6;
-            display: inline-block;
-        }
-
-        .text-danger.animate-pulse {
-            animation: pulse-red 2s infinite;
-            background: #fff5f5;
-            border-color: #feb2b2;
-        }
-
-        @@keyframes pulse-red {
-            0%, 100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.6;
-            }
-        }
-
-        .status-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            z-index: 10;
-        }
-
-        .alert-custom {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-    </style>
-
-    <div class="container py-5">
-        @* --- Header Section --- *@
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <div>
-                <h1 class="fw-bold"><i class="bi bi-luggage-fill text-primary"></i> My Bookings</h1>
-                <p class="text-muted mb-0">Manage your upcoming adventures and travel history</p>
-            </div>
-            <a asp-controller="Trips" asp-action="Index" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                <i class="bi bi-plus-lg"></i> New Booking
-            </a>
+<div class="container py-5">
+    @* --- Page Header Section --- *@
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h1 class="fw-bold"><i class="bi bi-luggage-fill text-primary"></i> My Bookings</h1>
+            <p class="text-muted mb-0">Manage your upcoming adventures and travel history</p>
         </div>
+        <a asp-controller="Trips" asp-action="Index" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-plus-lg"></i> New Booking
+        </a>
+    </div>
 
-        @* --- Alerts Section --- *@
-        @if (TempData["SuccessMessage"] != null)
+    @* --- Floating Alerts (Success/Error) --- *@
+    @if (TempData["SuccessMessage"] != null || TempData["Message"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show alert-custom px-4 py-3 mb-4" role="alert">
             <div class="d-flex align-items-center">
                 <i class="bi bi-check-circle-fill me-3 fs-4"></i>
                 <div>
                     <h6 class="mb-0 fw-bold">Success</h6>
-                    <span>@TempData["SuccessMessage"]</span>
+                    <span>@(TempData["SuccessMessage"] ?? TempData["Message"])</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </div>
     }
 
-        @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show alert-custom px-4 py-3 mb-4" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="bi bi-exclamation-octagon-fill me-3 fs-4"></i>
-                <div>
-                    <h6 class="mb-0 fw-bold">Action Denied</h6>
-                    <span>@TempData["ErrorMessage"]</span>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    }
+    @* --- Tab Navigation Menu --- *@
+    <ul class="nav nav-pills mb-5 bg-white p-2 rounded-pill shadow-sm d-inline-flex" id="bookingTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="pill" data-bs-target="#upcoming" type="button" role="tab">
+                Upcoming
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="history-tab" data-bs-toggle="pill" data-bs-target="#history" type="button" role="tab">
+                History
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link text-cancelled" id="cancelled-tab" data-bs-toggle="pill" data-bs-target="#cancelled" type="button" role="tab">
+                Cancelled Trips
+            </button>
+        </li>
+    </ul>
 
-        @* --- Upcoming Bookings --- *@
-        @if (!activeBookings.Any())
-    {
-        <div class="text-center py-5 bg-white rounded-4 shadow-sm border mb-5">
-            <i class="bi bi-airplane text-light" style="font-size: 4rem;"></i>
-            <h3 class="mt-3">No upcoming trips</h3>
-            <p class="text-muted">Ready for your next adventure?</p>
-            <a asp-controller="Trips" asp-action="Index" class="btn btn-outline-primary rounded-pill">Find a Trip</a>
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            @foreach (var item in activeBookings)
+    @* --- Tabs Content Sections --- *@
+    <div class="tab-content" id="bookingTabContent">
+
+        @* 1. UPCOMING TRIPS SECTION *@
+        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+            @if (!activeBookings.Any())
             {
-                // לוגיקה דינמית לשעות ביטול
-                int hoursLimit = item.Trip?.CancellationDeadlineHours ?? 24;
-                bool canCancelVisually = item.Trip != null && (item.Trip.StartDate - DateTime.Now).TotalHours >= hoursLimit;
-
-            <div class="col-12 mb-4">
-                <div class="card booking-card shadow-sm rounded-4 overflow-hidden">
-                    <div class="row g-0">
-                        <div class="col-md-3 position-relative">
-                            <img src="@(item.Trip?.ImageUrl ?? "/images/default-trip.jpg")" class="trip-image w-100" alt="Destination">
-                            <div class="status-badge"><span class="badge bg-success shadow">Upcoming</span></div>
-                        </div>
-
-                        <div class="col-md-6 p-4">
-                            <div class="mb-2">
-                                <small class="text-uppercase text-muted fw-bold">@item.Trip?.Country</small>
-                                <h3 class="fw-bold text-dark">@item.Trip?.Destination</h3>
-                            </div>
-                            <div class="d-flex gap-4 mb-3">
-                                <div>
-                                    <small class="text-muted d-block small">DEPARTURE</small>
-                                    <span class="fw-bold"><i class="bi bi-calendar3 me-1 text-primary"></i>@item.Trip?.StartDate.ToShortDateString()</span>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block small">TRAVELERS</small>
-                                    <span class="fw-bold"><i class="bi bi-people me-1 text-primary"></i>@item.PeopleCount</span>
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <div class="countdown-timer fw-bold text-primary"
-                                     id="timer-@item.BookingId"
-                                     data-startdate="@item.Trip?.StartDate.ToString(" yyyy-MM-ddTHH:mm:ss")"
-                                     data-limit="@hoursLimit">
-                                    Loading...
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3 bg-light p-4 d-flex flex-column justify-content-center border-start text-center">
-                            <small class="text-muted">Total Paid</small>
-                            <h2 class="fw-bold text-primary mb-3">$@item.TotalPrice</h2>
-                            <div class="d-grid gap-2">
-                                <button onclick="downloadBookingPDF('@item.BookingId', '@item.Trip?.Destination', '@item.Trip?.Country', '@item.BookingDate.ToShortDateString()', '@item.PeopleCount', '@item.TotalPrice')"
-                                        class="btn btn-success rounded-pill btn-sm">
-                                    <i class="bi bi-file-earmark-pdf"></i> Receipt
-                                </button>
-
-                                @if (canCancelVisually)
-                                    {
-                                <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post"
-                                      onsubmit="return confirm('Cancel this trip?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-danger rounded-pill btn-sm w-100">Cancel Booking</button>
-                                </form>
-                                    }
-                                    else
-                                    {
-                                <button class="btn btn-outline-secondary rounded-pill btn-sm disabled" title="Cancellation locked">
-                                    <i class="bi bi-lock-fill"></i> Locked
-                                </button>
-                                    }
-                            </div>
-                        </div>
-                    </div>
+                <div class="text-center py-5 bg-white rounded-4 shadow-sm border">
+                    <i class="bi bi-airplane text-light" style="font-size: 4rem;"></i>
+                    <h3 class="mt-3">No upcoming trips</h3>
+                    <p class="text-muted">Ready for your next adventure?</p>
+                    <a asp-controller="Trips" asp-action="Index" class="btn btn-outline-primary rounded-pill">Find a Trip</a>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var item in activeBookings)
+                    {
+                        int hoursLimit = item.Trip?.CancellationDeadlineHours ?? 24;
+                        bool canCancelVisually = item.Trip != null && (item.Trip.StartDate - DateTime.Now).TotalHours >= hoursLimit;
+
+                        <div class="col-12 mb-4">
+                            <div class="card booking-card shadow-sm rounded-4 overflow-hidden">
+                                <div class="row g-0">
+                                    <div class="col-md-3 position-relative">
+                                        <img src="@(item.Trip?.ImageUrl ?? "/images/default-trip.jpg")" class="trip-image w-100" alt="Destination">
+                                        <div class="status-badge"><span class="badge bg-success shadow">Upcoming</span></div>
+                                    </div>
+                                    <div class="col-md-6 p-4">
+                                        <div class="mb-2">
+                                            <small class="text-uppercase text-muted fw-bold">@item.Trip?.Country</small>
+                                            <h3 class="fw-bold text-dark">@item.Trip?.Destination</h3>
+                                        </div>
+                                        <div class="d-flex gap-4 mb-3">
+                                            <div>
+                                                <small class="text-muted d-block small">DEPARTURE</small>
+                                                <span class="fw-bold"><i class="bi bi-calendar3 me-1 text-primary"></i>@item.Trip?.StartDate.ToShortDateString()</span>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block small">TRAVELERS</small>
+                                                <span class="fw-bold"><i class="bi bi-people me-1 text-primary"></i>@item.PeopleCount</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="countdown-timer fw-bold text-primary"
+                                                 id="timer-@item.BookingId"
+                                                 data-startdate="@item.Trip?.StartDate.ToString("yyyy-MM-ddTHH:mm:ss")"
+                                                 data-limit="@hoursLimit">
+                                                Loading...
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 bg-light p-4 d-flex flex-column justify-content-center border-start text-center">
+                                        <small class="text-muted">Total Paid</small>
+                                        <h2 class="fw-bold text-primary mb-3">$@item.TotalPrice</h2>
+                                        <div class="d-grid gap-2">
+                                            <button onclick="downloadBookingPDF('@item.BookingId', '@item.Trip?.Destination', '@item.Trip?.Country', '@item.BookingDate.ToShortDateString()', '@item.PeopleCount', '@item.TotalPrice')"
+                                                    class="btn btn-success rounded-pill btn-sm">
+                                                <i class="bi bi-file-earmark-pdf"></i> Receipt
+                                            </button>
+                                            @if (canCancelVisually)
+                                            {
+                                                <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post" onsubmit="return confirm('Cancel this trip?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger rounded-pill btn-sm w-100">Cancel Booking</button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-secondary rounded-pill btn-sm disabled" title="Cancellation locked">
+                                                    <i class="bi bi-lock-fill"></i> Locked
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
             }
         </div>
-    }
 
-        @* --- History Section --- *@
-        @if (pastBookings != null && pastBookings.Any())
-    {
-        <div class="mt-5 pt-4 border-top">
-            <h4 class="fw-bold text-muted mb-4"><i class="bi bi-clock-history"></i> Where You've Been</h4>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                @foreach (var past in pastBookings)
-                {
-                <div class="col">
-                    <div class="card h-100 border-0 shadow-sm rounded-3 opacity-75">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-1">@past.Trip?.Destination</h6>
-                            <p class="small text-muted mb-2">@past.Trip?.StartDate.ToShortDateString()</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-secondary">Completed</span>
-                                <span class="fw-bold text-dark">$@past.TotalPrice</span>
+        @* 2. TRAVEL HISTORY SECTION *@
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            @if (pastBookings != null && pastBookings.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    @foreach (var past in pastBookings)
+                    {
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm rounded-3 opacity-75">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-1">@past.Trip?.Destination</h6>
+                                    <p class="small text-muted mb-2">@past.Trip?.StartDate.ToShortDateString()</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-secondary">Completed</span>
+                                        <span class="fw-bold text-dark">$@past.TotalPrice</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
-                }
-            </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted">No travel history yet.</p>
+                </div>
+            }
         </div>
-    }
+
+        @* 3. CANCELLED TRIPS SECTION *@
+        <div class="tab-pane fade" id="cancelled" role="tabpanel">
+            @if (cancelledBookings != null && cancelledBookings.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    @foreach (var cancelled in cancelledBookings)
+                    {
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm rounded-3 bg-white border-start border-danger border-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="fw-bold mb-1">@cancelled.Trip?.Destination</h6>
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    </div>
+                                    <p class="small text-muted mb-2">Planned for: @cancelled.Trip?.StartDate.ToShortDateString()</p>
+                                    <hr />
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Original Price:</small>
+                                        <span class="text-decoration-line-through text-muted small">$@cancelled.TotalPrice</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 bg-white rounded-4 border">
+                    <i class="bi bi-x-circle text-light" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">No cancelled bookings found.</p>
+                </div>
+            }
+        </div>
     </div>
+</div>
 
-    @section Scripts {
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-        <script>
-            function downloadBookingPDF(id, dest, country, date, people, price) {
-                const element = document.createElement('div');
-                element.innerHTML = `<div style="padding:40px; font-family:sans-serif;"><h2>Receipt #${id}</h2><p>${dest}, ${country}</p><p>Total Paid: $${price}</p></div>`;
-                html2pdf().from(element).save('Receipt_' + id + '.pdf');
-            }
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        // PDF Receipt Generation
+        function downloadBookingPDF(id, dest, country, date, people, price) {
+            const element = document.createElement('div');
+            element.innerHTML = `<div style="padding:40px; font-family:sans-serif;">
+                                    <h1 style="color:#0066ff;">Booking Receipt</h1>
+                                    <hr/>
+                                    <h3>Order ID: #${id}</h3>
+                                    <p><strong>Destination:</strong> ${dest}, ${country}</p>
+                                    <p><strong>Date:</strong> ${date}</p>
+                                    <p><strong>Travelers:</strong> ${people}</p>
+                                    <h2 style="margin-top:20px;">Total Paid: $${price}</h2>
+                                 </div>`;
+            html2pdf().from(element).save('Receipt_' + id + '.pdf');
+        }
 
-            function updateCountdowns() {
-                const now = new Date().getTime();
-                document.querySelectorAll('.countdown-timer').forEach(timer => {
-                    const startDate = new Date(timer.getAttribute('data-startdate')).getTime();
-                    const limitHours = parseInt(timer.getAttribute('data-limit'));
-                    const distance = startDate - now;
+        // Live Countdown Logic 
+        function updateCountdowns() {
+            const now = new Date().getTime();
+            document.querySelectorAll('.countdown-timer').forEach(timer => {
+                const startDateStr = timer.getAttribute('data-startdate');
+                if (!startDateStr) return;
 
-                    if (distance < 0) {
-                        timer.innerHTML = "Trip in progress!";
-                        timer.className = "countdown-timer fw-bold text-success";
-                        return;
-                    }
+                const startDate = new Date(startDateStr).getTime();
+                const limitHours = parseInt(timer.getAttribute('data-limit'));
+                const distance = startDate - now;
 
-                    if (distance < (limitHours * 3600000)) {
-                        timer.classList.add('text-danger', 'animate-pulse');
-                    }
+                if (distance < 0) {
+                    timer.innerHTML = "Trip in progress!";
+                    timer.className = "countdown-timer fw-bold text-success";
+                    return;
+                }
 
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    timer.innerHTML = `${days}d ${hours}h ${minutes}m`;
-                });
-            }
-            updateCountdowns();
-            setInterval(updateCountdowns, 60000);
+                if (distance < (limitHours * 3600000)) {
+                    timer.classList.add('text-danger', 'animate-pulse');
+                }
 
-            setTimeout(() => { $('.alert').fadeOut('slow'); }, 5000);
-        </script>
-    }
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                timer.innerHTML = `${days}d ${hours}h ${minutes}m`;
+            });
+        }
+
+        updateCountdowns();
+        setInterval(updateCountdowns, 60000); // Update every minute
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(a => {
+                $(a).fadeOut('slow');
+            });
+        }, 5000);
+    </script>
+}
