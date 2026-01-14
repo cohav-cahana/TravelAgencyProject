@@ -297,6 +297,7 @@ namespace TravelAgencyProject.Controllers
 
             if (booking == null || booking.Trip == null) return NotFound();
 
+            // Check cancellation deadline
             int allowedHours = booking.Trip.CancellationDeadlineHours > 0
                                ? booking.Trip.CancellationDeadlineHours
                                : 24;
@@ -309,15 +310,46 @@ namespace TravelAgencyProject.Controllers
                 return RedirectToAction("Index", "Booking");
             }
 
+            // 1. Update Trip Stock and Booking Status
             booking.Trip.Stock += booking.PeopleCount;
             _context.Update(booking.Trip);
-
             booking.bookingStatus = TripStatus.Cancelled;
 
+            // Save initial changes to ensure stock is updated
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Your booking has been successfully cancelled. {booking.PeopleCount} seats have been returned to stock.";
+            // --- 2. AUTOMATIC WAITING LIST NOTIFICATION ---
+            // Look for the first person in line for this specific trip who hasn't been notified yet
+            var nextInLine = await _context.WaitingLists
+                .Include(w => w.User)
+                .Where(w => w.TripId == booking.TripId && !w.HasBeenNotified)
+                .OrderBy(w => w.RequestDate) // FIFO: First In, First Served
+                .FirstOrDefaultAsync();
 
+            if (nextInLine != null && nextInLine.User != null)
+            {
+                try
+                {
+                    // Send the automatic email notification
+                    await _emailService.SendEmailAsync(
+                        nextInLine.User.Email,
+                        "Good News! A spot opened up",
+                        $"Hi {nextInLine.User.FirstName}, a spot is now available for your trip to {booking.Trip.Destination}. " +
+                        "Since you are next in line, you can now proceed to book this trip. Don't wait too long!"
+                    );
+
+                    // Update the entry to mark that they have been notified
+                    nextInLine.HasBeenNotified = true;
+                    _context.Update(nextInLine);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    // Fail silently if email server is down, so the cancellation still completes
+                }
+            }
+
+            TempData["SuccessMessage"] = $"Your booking has been successfully cancelled. {booking.PeopleCount} seats have been returned to stock.";
             return RedirectToAction("Index", "Booking");
         }
         [HttpPost]
