@@ -130,7 +130,6 @@ namespace TravelAgencyProject.Controllers
         {
             if (id == null) return NotFound();
 
-            // Fetch the trip including its reviews and the users who wrote them
             var trip = await _context.Trips
                 .Include(t => t.Reviews)
                     .ThenInclude(r => r.User)
@@ -151,21 +150,27 @@ namespace TravelAgencyProject.Controllers
             }
             ViewBag.CanLeaveReview = canLeaveReview;
 
-            var first = await _context.WaitingLists
-                .Where(w => w.TripId == trip.TripId)
-                .OrderBy(w => w.RequestDate)
-                .FirstOrDefaultAsync();
 
-            bool isInWaitingList = false;
-            if (userId.HasValue)
+            var userEntry = userId.HasValue
+                ? await _context.WaitingLists.FirstOrDefaultAsync(w => w.TripId == trip.TripId && w.UserId == userId.Value)
+                : null;
+
+            if (userEntry != null)
             {
-                isInWaitingList = await _context.WaitingLists
-                    .AnyAsync(w => w.TripId == trip.TripId && w.UserId == userId.Value);
+                int peopleAhead = await _context.WaitingLists
+                    .CountAsync(w => w.TripId == trip.TripId && w.RequestDate < userEntry.RequestDate);
+
+                ViewBag.IsInWaitingList = true;
+                ViewBag.PeopleAhead = peopleAhead;
+
+                ViewBag.EstimatedWaitDays = (peopleAhead + 1) * 2;
+            }
+            else
+            {
+                ViewBag.IsInWaitingList = false;
             }
 
-            ViewBag.HasWaitingList = (first != null);
-            ViewBag.IsFirstInWaitingList = (first != null && userId.HasValue && first.UserId == userId.Value);
-            ViewBag.IsInWaitingList = isInWaitingList;
+            ViewBag.HasWaitingList = await _context.WaitingLists.AnyAsync(w => w.TripId == trip.TripId);
 
             return View(trip);
         }
@@ -365,7 +370,7 @@ namespace TravelAgencyProject.Controllers
             }
             int userId = int.Parse(userIdString);
 
-            // ✅ Waiting list rule:
+            //  Waiting list rule:
             // If there is a waiting list for this trip, ONLY the first user in line can book/add to cart.
             var firstInWaitingList = await _context.WaitingLists
                 .Where(w => w.TripId == id)
@@ -557,11 +562,11 @@ namespace TravelAgencyProject.Controllers
             decimal totalOrderPrice = 0;
             List<string> destinationNames = new List<string>();
 
-            // ✅ Collect trips that were sold out due to concurrency (last spot taken)
+            // Collect trips that were sold out due to concurrency (last spot taken)
             List<int> soldOutTripIds = new List<int>();
             Dictionary<int, string> soldOutTripNames = new Dictionary<int, string>();
 
-            // ✅ Transaction for the whole cart processing
+            // Transaction for the whole cart processing
             await using var tx = await _context.Database.BeginTransactionAsync();
 
             // --- Processing Bookings ---
@@ -587,7 +592,7 @@ namespace TravelAgencyProject.Controllers
                     continue;
                 }
 
-                // ✅ ATOMIC STOCK DECREASE (prevents double booking of last spot)
+                //  ATOMIC STOCK DECREASE (prevents double booking of last spot)
                 var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
             UPDATE Trips
             SET Stock = Stock - {peopleCount}
@@ -628,7 +633,7 @@ namespace TravelAgencyProject.Controllers
                 destinationNames.Add(trip.Destination);
             }
 
-            // ✅ If some trips failed due to last-spot being taken, pass them to the checkout view
+            //  If some trips failed due to last-spot being taken, pass them to the checkout view
             if (soldOutTripIds.Count > 0)
             {
                 TempData["SoldOutTripIds"] = System.Text.Json.JsonSerializer.Serialize(soldOutTripIds);

@@ -177,7 +177,21 @@
                                     <div class="alert alert-warning rounded-4 shadow-sm mb-0">
                                         <div class="fw-bold">This trip currently has a waiting list.</div>
                                         <div class="small text-muted">Only the first user in line can book right now.</div>
+
+                                        @if (isInWaitingList)
+                                        {
+                                            <div class="mt-3 p-3 bg-white rounded-3 border border-warning">
+                                                <h6 class="fw-bold text-dark">Your Status:</h6>
+                                                <p class="mb-1 text-primary">
+                                                    <i class="bi bi-people-fill me-2"></i>People ahead of you: <strong>@ViewBag.PeopleAhead</strong>
+                                                </p>
+                                                <p class="mb-0 text-muted">
+                                                    <i class="bi bi-hourglass-split me-2"></i>Estimated wait for a spot: <strong>@ViewBag.EstimatedWaitDays days</strong>
+                                                </p>
+                                            </div>
+                                        }
                                     </div>
+
 
                                     @if (isInWaitingList)
                                     {
@@ -185,6 +199,7 @@
                                             ✅ You are on the waiting list
                                         </button>
                                     }
+
                                     else
                                     {
                                         <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline">
