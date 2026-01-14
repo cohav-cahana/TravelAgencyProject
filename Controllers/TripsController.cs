@@ -389,6 +389,14 @@ namespace TravelAgencyProject.Controllers
 
                 return RedirectToAction("Details", new { id = id });
             }
+            var trip = await _context.Trips.FindAsync(id); // verify trip exists
+            if (trip == null) return NotFound(); // trip doesn't exist
+            if (trip.StartDate.Date <= DateTime.Today) // trip already started
+            {
+                TempData["Error"] = "Booking is closed for this trip as it starts today or has already passed.";
+                return RedirectToAction("Index");
+            }
+
 
             if (directPurchase)
             {
@@ -403,7 +411,10 @@ namespace TravelAgencyProject.Controllers
                 : System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
 
             int activeBookingsCount = await _context.Bookings
-                .CountAsync(b => b.UserId == userId && b.bookingStatus == TripStatus.Upcoming);
+    .Include(b => b.Trip)
+    .CountAsync(b => b.UserId == userId &&
+                b.bookingStatus != TripStatus.Cancelled &&
+                b.Trip.StartDate >= DateTime.Today); // Only count trips from today onwards
 
             if (activeBookingsCount + cart.Count >= 3)
             {

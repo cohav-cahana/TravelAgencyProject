@@ -331,7 +331,7 @@
 
         <hr class="my-5" />
 
-        @* --- מנגנון הוספת ביקורת מבוסס הרשאות הזמנה --- *@
+        
         @if (Context.Session.GetString("IsAdmin") == "true")
         {
             <div class="alert alert-secondary text-center rounded-4 shadow-sm border-0 p-4">
@@ -374,7 +374,6 @@
         }
         else if (Context.Session.GetString("UserId") != null)
         {
-            @* משתמש מחובר שלא הזמין את הטיול *@
             <div class="card shadow-sm p-5 rounded-4 bg-white border-0 text-center">
                 <i class="bi bi-lock-fill review-lock-icon mb-3"></i>
                 <h5 class="fw-bold">Reviews are for Travelers</h5>
@@ -388,7 +387,7 @@
         }
         else
         {
-            @* משתמש לא מחובר *@
+            @* user that dosent log in *@
             <div class="alert alert-info rounded-4 text-center shadow-sm p-4 border-0">
                 <h5 class="fw-bold">Want to leave a review?</h5>
                 <p>Please <a asp-controller="Account" asp-action="Login" class="fw-bold text-primary">Login</a> to share your thoughts.</p>
