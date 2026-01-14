@@ -3,78 +3,40 @@
 @{
     ViewData["Title"] = "Trip Details";
 
-    // ViewBag flags from TripsController.Details
+    // שליפת הנתונים מה-ViewBag שהגדרנו ב-Controller
     bool hasWaitingList = ViewBag.HasWaitingList ?? false;
-    bool isFirstInWaitingList = ViewBag.IsFirstInWaitingList ?? false;
     bool isInWaitingList = ViewBag.IsInWaitingList ?? false;
-    bool canLeaveReview = ViewBag.CanLeaveReview ?? false; // הדגל החדש
+    bool canLeaveReview = ViewBag.CanLeaveReview ?? false;
+
+    // זה המשתנה הקריטי: מאפשר להזמין רק אם יש מלאי וגם (אין רשימה או שהוא הראשון בה)
+    bool canBookNow = ViewBag.CanBookNow ?? false;
 
     var itinerary = new List<string>();
     switch (Model.Destination)
     {
         case "Paris":
-            itinerary.AddRange(new[] {
-                "Day 1: Arrival & Eiffel Tower at night",
-                "Day 2: Louvre Museum and Seine River Cruise",
-                "Day 3: Full day at Disneyland Paris",
-                "Day 4: Montmartre district and departure"
-            });
+            itinerary.AddRange(new[] { "Day 1: Arrival & Eiffel Tower at night", "Day 2: Louvre Museum and Seine River Cruise", "Day 3: Full day at Disneyland Paris", "Day 4: Montmartre district and departure" });
             break;
         case "London":
-            itinerary.AddRange(new[] {
-                "Day 1: Big Ben, London Eye and Southbank walk",
-                "Day 2: British Museum and Covent Garden",
-                "Day 3: Shopping at Oxford Street and Regent Street",
-                "Day 4: Buckingham Palace and Flight home"
-            });
+            itinerary.AddRange(new[] { "Day 1: Big Ben, London Eye and Southbank walk", "Day 2: British Museum and Covent Garden", "Day 3: Shopping at Oxford Street and Regent Street", "Day 4: Buckingham Palace and Flight home" });
             break;
         case "Tokyo":
-            itinerary.AddRange(new[] {
-                "Day 1: Shinjuku skyscrapers and nightlife",
-                "Day 2: Tsukiji Fish Market and Ginza shopping",
-                "Day 3: Harajuku fashion and Meiji Shrine",
-                "Day 4: Akihabara tech town and departure"
-            });
+            itinerary.AddRange(new[] { "Day 1: Shinjuku skyscrapers and nightlife", "Day 2: Tsukiji Fish Market and Ginza shopping", "Day 3: Harajuku fashion and Meiji Shrine", "Day 4: Akihabara tech town and departure" });
             break;
         case "New York":
-            itinerary.AddRange(new[] {
-                "Day 1: Times Square and Top of the Rock view",
-                "Day 2: Statue of Liberty and Financial District",
-                "Day 3: Central Park bike ride and Museum mile",
-                "Day 4: Brooklyn Bridge and High Line walk"
-            });
+            itinerary.AddRange(new[] { "Day 1: Times Square and Top of the Rock view", "Day 2: Statue of Liberty and Financial District", "Day 3: Central Park bike ride and Museum mile", "Day 4: Brooklyn Bridge and High Line walk" });
             break;
         case "Tel Aviv":
-            itinerary.AddRange(new[] {
-                "Day 1: Beach day and Gordon Pier",
-                "Day 2: Carmel Market and Neve Tzedek walk",
-                "Day 3: Old Jaffa port and Flea Market",
-                "Day 4: Bauhaus architecture tour and departure"
-            });
+            itinerary.AddRange(new[] { "Day 1: Beach day and Gordon Pier", "Day 2: Carmel Market and Neve Tzedek walk", "Day 3: Old Jaffa port and Flea Market", "Day 4: Bauhaus architecture tour and departure" });
             break;
         case "Rome":
-            itinerary.AddRange(new[] {
-                "Day 1: Colosseum and Roman Forum",
-                "Day 2: Vatican City and St. Peter's Basilica",
-                "Day 3: Trevi Fountain and Spanish Steps",
-                "Day 4: Trastevere food tour and departure"
-            });
+            itinerary.AddRange(new[] { "Day 1: Colosseum and Roman Forum", "Day 2: Vatican City and St. Peter's Basilica", "Day 3: Trevi Fountain and Spanish Steps", "Day 4: Trastevere food tour and departure" });
             break;
         case "Dubai":
-            itinerary.AddRange(new[] {
-                "Day 1: Burj Khalifa and Dubai Mall fountains",
-                "Day 2: Desert Safari and traditional dinner",
-                "Day 3: Palm Jumeirah and waterpark",
-                "Day 4: Gold Souk and airport transfer"
-            });
+            itinerary.AddRange(new[] { "Day 1: Burj Khalifa and Dubai Mall fountains", "Day 2: Desert Safari and traditional dinner", "Day 3: Palm Jumeirah and waterpark", "Day 4: Gold Souk and airport transfer" });
             break;
         default:
-            itinerary.AddRange(new[] {
-                "Day 1: Arrival, hotel check-in and welcome dinner",
-                "Day 2: Guided city tour covering major landmarks",
-                "Day 3: Free day for local exploration and shopping",
-                "Day 4: Last minute souvenirs and transfer to airport"
-            });
+            itinerary.AddRange(new[] { "Day 1: Arrival, hotel check-in and welcome dinner", "Day 2: Guided city tour covering major landmarks", "Day 3: Free day for local exploration and shopping", "Day 4: Last minute souvenirs and transfer to airport" });
             break;
     }
 }
@@ -85,28 +47,13 @@
         border: none;
         color: white;
         transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
     }
 
         .btn-download-pdf:hover {
             background: linear-gradient(135deg, #a71d2a 0%, #86161f 100%);
-            color: white;
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4) !important;
         }
-
-        .btn-download-pdf i {
-            transition: transform 0.3s ease;
-        }
-
-        .btn-download-pdf:hover i {
-            transform: scale(1.2) rotate(-5deg);
-        }
-
-    .transition-all {
-        transition: all 0.3s ease;
-    }
 
     .review-lock-icon {
         font-size: 3rem;
@@ -117,18 +64,8 @@
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4 rounded-pill" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["Message"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 rounded-pill" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        @TempData["Message"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
@@ -146,7 +83,6 @@
                 <div class="card-body p-4 p-lg-5">
                     <h2 class="card-title fw-bold text-primary">@Model.Destination, @Model.Country</h2>
                     <span class="badge bg-info text-dark mb-3 px-3 py-2">@Model.Category</span>
-
                     <p class="card-text text-muted fs-5">@Model.Description</p>
 
                     <hr class="my-4" />
@@ -164,7 +100,7 @@
 
                     <div class="mt-5 d-flex flex-column gap-3">
                         <div class="d-flex gap-2 align-items-center">
-                            <a asp-action="Index" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Back to List</a>
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Back</a>
 
                             @if (Context.Session.GetString("IsAdmin") == "true")
                             {
@@ -172,226 +108,92 @@
                             }
                             else
                             {
-                                @if (hasWaitingList && !isFirstInWaitingList)
+                                @* לוגיקת כפתור הזמנה חכמה *@
+                                @if (canBookNow)
                                 {
-                                    <div class="alert alert-warning rounded-4 shadow-sm mb-0">
-                                        <div class="fw-bold">This trip currently has a waiting list.</div>
-                                        <div class="small text-muted">Only the first user in line can book right now.</div>
-
-                                        @if (isInWaitingList)
-                                        {
-                                            <div class="mt-3 p-3 bg-white rounded-3 border border-warning">
-                                                <h6 class="fw-bold text-dark">Your Status:</h6>
-                                                <p class="mb-1 text-primary">
-                                                    <i class="bi bi-people-fill me-2"></i>People ahead of you: <strong>@ViewBag.PeopleAhead</strong>
-                                                </p>
-                                                <p class="mb-0 text-muted">
-                                                    <i class="bi bi-hourglass-split me-2"></i>Estimated wait for a spot: <strong>@ViewBag.EstimatedWaitDays days</strong>
-                                                </p>
-                                            </div>
-                                        }
-                                    </div>
-
-
-                                    @if (isInWaitingList)
-                                    {
-                                        <button class="btn btn-secondary btn-lg shadow rounded-pill px-4 fw-bold" disabled>
-                                            ✅ You are on the waiting list
+                                    @* יוצג רק למי שראשון בתור (או כשאין תור) ויש מלאי *@
+                                    <form asp-action="AddToCart" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@Model.TripId" />
+                                        <input type="hidden" name="goToCheckout" value="true" />
+                                        <button type="submit" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold">
+                                            ✈️ BOOK NOW
                                         </button>
-                                    }
-
-                                    else
-                                    {
-                                        <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="tripId" value="@Model.TripId" />
-                                            <button type="submit" class="btn btn-warning btn-lg shadow rounded-pill px-4 fw-bold">
-                                                ⏳ Join Waiting List
-                                            </button>
-                                        </form>
-                                    }
+                                    </form>
                                 }
-                                else
+                                else if (isInWaitingList)
                                 {
-                                    @if (Model.Stock > 0)
-                                    {
-                                        <form asp-action="AddToCart" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@Model.TripId" />
-                                            <input type="hidden" name="goToCheckout" value="true" />
-                                            <button type="submit" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold">
-                                                ✈️ BOOK NOW
-                                            </button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        @if (isInWaitingList)
-                                        {
-                                            <button class="btn btn-secondary btn-lg shadow rounded-pill px-4 fw-bold" disabled>
-                                                ✅ You are on the waiting list
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="tripId" value="@Model.TripId" />
-                                                <button type="submit" class="btn btn-warning btn-lg shadow rounded-pill px-4 fw-bold">
-                                                    ⏳ Join Waiting List
-                                                </button>
-                                            </form>
-                                        }
-                                    }
+                                    @* יוצג למי שברשימת המתנה אבל עוד לא הגיע תורו או שאין חדר *@
+                                    <div class="d-flex flex-column w-100">
+                                        <div class="alert alert-warning rounded-4 shadow-sm mb-2 p-3">
+                                            <div class="fw-bold"><i class="bi bi-hourglass-split me-2"></i>You are on the waiting list</div>
+                                            <div class="small">People ahead: <strong>@ViewBag.PeopleAhead</strong></div>
+                                        </div>
+                                        <button class="btn btn-secondary btn-lg shadow rounded-pill px-4 fw-bold" disabled>
+                                            ✅ Position Reserved
+                                        </button>
+                                    </div>
+                                }
+                                else if (Model.Stock <= 0 || hasWaitingList)
+                                {
+                                    @* יוצג למשתמש חדש כשאין מקום או שיש תור לפניו *@
+                                    <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="tripId" value="@Model.TripId" />
+                                        <button type="submit" class="btn btn-warning btn-lg shadow rounded-pill px-4 fw-bold w-100">
+                                            ⏳ Join Waiting List
+                                        </button>
+                                    </form>
                                 }
                             }
                         </div>
 
-                        <button id="download-itinerary" class="btn btn-download-pdf btn-lg rounded-pill px-4 shadow-sm fw-bold w-100 transition-all">
+                        <button id="download-itinerary" class="btn btn-download-pdf btn-lg rounded-pill px-4 shadow-sm fw-bold w-100">
                             <i class="bi bi-file-earmark-pdf-fill me-2 fs-4"></i> Download Trip Plan (PDF)
                         </button>
                     </div>
 
-                    @* Hidden content for PDF generation *@
-                    <div id="itinerary-content" style="display: none; background: white; padding: 50px; font-family: 'Segoe UI', sans-serif;">
-                        <div style="border-top: 10px solid #0d6efd; padding-top: 20px;">
-                            <h1 style="color: #0d6efd; font-size: 32px; margin-bottom: 5px;">Travel Plan: @Model.Destination</h1>
-                            <p style="color: #6c757d; font-size: 16px;">Experience @Model.Country with TravelAgency</p>
-                        </div>
-                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-                            <h4 style="margin-top: 0; color: #343a40;">Quick Summary</h4>
-                            <p><strong>Travel Dates:</strong> @Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
-                            <p><strong>Destination:</strong> @Model.Destination, @Model.Country</p>
-                        </div>
-                        <h3 style="color: #0d6efd; border-bottom: 2px solid #eee; padding-bottom: 10px;">Day-by-Day Itinerary</h3>
-                        <div style="margin-top: 20px;">
-                            @foreach (var day in itinerary)
-                            {
-                                <div style="margin-bottom: 15px; padding: 15px; border-left: 5px solid #0d6efd; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                    <p style="font-size: 18px; margin: 0; color: #212529;">@day</p>
-                                </div>
-                            }
-                        </div>
+                    @* תוכן מוסתר ל-PDF *@
+                    <div id="itinerary-content" style="display: none; background: white; padding: 50px;">
+                        <h1 style="color: #0d6efd;">Travel Plan: @Model.Destination</h1>
+                        <p><strong>Dates:</strong> @Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
+                        <hr />
+                        <h3>Itinerary</h3>
+                        @foreach (var day in itinerary)
+                        {
+                            <p style="padding: 10px; border-left: 5px solid #0d6efd; background: #f8f9fa;">@day</p>
+                        }
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    @* Reviews section *@
+    @* Reviews Section *@
     <div class="mt-5 pt-4">
         <h3 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2 text-primary"></i>Customer Reviews</h3>
-
         @if (Model.Reviews != null && Model.Reviews.Any())
         {
             @foreach (var review in Model.Reviews.OrderByDescending(r => r.PostedDate))
             {
                 <div class="card mb-3 shadow-sm border-0 rounded-4 p-2">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="fw-bold text-primary mb-1">@review.User?.FirstName @review.User?.LastName</h6>
-                                <div class="text-warning mb-2">
-                                    @for (int i = 0; i < review.Rating; i++)
-                                    {
-                                        <i class="bi bi-star-fill"></i>
-                                    }
-                                    @for (int i = review.Rating; i < 5; i++)
-                                    {
-                                        <i class="bi bi-star"></i>
-                                    }
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block">@review.PostedDate.ToShortDateString()</small>
-                                @if (Context.Session.GetString("IsAdmin") == "true")
-                                {
-                                    <form asp-controller="Reviews" asp-action="Delete" method="post" onsubmit="return confirm('Are you sure?');" class="mt-2">
-                                        <input type="hidden" name="id" value="@review.ReviewId" />
-                                        <input type="hidden" name="tripId" value="@Model.TripId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
-                                    </form>
-                                }
-                            </div>
+                        <h6 class="fw-bold text-primary">@review.User?.FirstName @review.User?.LastName</h6>
+                        <div class="text-warning mb-2">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                                <i class="bi bi-star@(i < review.Rating ? "-fill" : "")"></i>
+                            }
                         </div>
-                        <p class="card-text mt-2 text-dark">@review.Comment</p>
+                        <p class="card-text">@review.Comment</p>
+                        <small class="text-muted">@review.PostedDate.ToShortDateString()</small>
                     </div>
                 </div>
             }
         }
         else
         {
-            <div class="text-center py-4 bg-light rounded-4 border border-dashed">
-                <p class="text-muted mb-0 italic">No reviews yet.</p>
-            </div>
-        }
-
-        <hr class="my-5" />
-
-        
-        @if (Context.Session.GetString("IsAdmin") == "true")
-        {
-            <div class="alert alert-secondary text-center rounded-4 shadow-sm border-0 p-4">
-                <i class="bi bi-shield-lock-fill fs-2 mb-2 d-block text-muted"></i>
-                <h5 class="fw-bold">Admin Mode</h5>
-                <p class="mb-0">Admins can manage reviews but cannot post new ones.</p>
-            </div>
-        }
-        else if (canLeaveReview)
-        {
-            <div class="card shadow-sm p-4 p-lg-5 rounded-4 bg-light border-0">
-                <h5 class="fw-bold mb-4">Share Your Experience</h5>
-                <form asp-controller="Reviews" asp-action="Create" method="post" id="reviewForm">
-                    <input type="hidden" name="TripId" value="@Model.TripId" />
-                    <input type="hidden" name="UserId" value="@Context.Session.GetString("UserId")" />
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small">Rating</label>
-                            <select name="Rating" class="form-select rounded-3" required>
-                                <option value="5">5 - Excellent ★★★★★</option>
-                                <option value="4">4 - Very Good ★★★★</option>
-                                <option value="3">3 - Good ★★★</option>
-                                <option value="2">2 - Fair ★★</option>
-                                <option value="1">1 - Poor ★</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small">Your Feedback</label>
-                        <textarea name="Comment" class="form-control rounded-3" rows="4" placeholder="How was your trip?..." required maxlength="500"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold">
-                        Post My Review
-                    </button>
-                </form>
-            </div>
-        }
-        else if (Context.Session.GetString("UserId") != null)
-        {
-            <div class="card shadow-sm p-5 rounded-4 bg-white border-0 text-center">
-                <i class="bi bi-lock-fill review-lock-icon mb-3"></i>
-                <h5 class="fw-bold">Reviews are for Travelers</h5>
-                <p class="text-muted mx-auto" style="max-width: 400px;">
-                    Only customers who have a confirmed booking for the <strong>@Model.Destination</strong> trip can share their experience.
-                </p>
-                <div class="mt-2">
-                    <span class="badge bg-light text-muted p-2">Verify your booking in "My Bookings" to unlock.</span>
-                </div>
-            </div>
-        }
-        else
-        {
-            @* user that dosent log in *@
-            <div class="alert alert-info rounded-4 text-center shadow-sm p-4 border-0">
-                <h5 class="fw-bold">Want to leave a review?</h5>
-                <p>Please <a asp-controller="Account" asp-action="Login" class="fw-bold text-primary">Login</a> to share your thoughts.</p>
-            </div>
+            <p class="text-center text-muted">No reviews yet.</p>
         }
     </div>
 </div>
@@ -401,27 +203,9 @@
     <script>
         document.getElementById('download-itinerary').addEventListener('click', function () {
             const btn = this;
-            const originalText = btn.innerHTML;
-
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Generating PDF...';
-            btn.classList.add('disabled');
-
             const element = document.getElementById('itinerary-content');
             element.style.display = 'block';
-
-            const opt = {
-                margin: 15,
-                filename: 'Itinerary_@Model.Destination' + '.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.style.display = 'none';
-                btn.innerHTML = originalText;
-                btn.classList.remove('disabled');
-            });
+            html2pdf().from(element).save().then(() => { element.style.display = 'none'; });
         });
     </script>
 }

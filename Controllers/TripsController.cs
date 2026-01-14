@@ -140,6 +140,7 @@ namespace TravelAgencyProject.Controllers
             var userIdStr = HttpContext.Session.GetString("UserId");
             int? userId = string.IsNullOrEmpty(userIdStr) ? null : int.Parse(userIdStr);
 
+            // --- בדיקת אפשרות להשארת ביקורת (קיים אצלך) ---
             bool canLeaveReview = false;
             if (userId.HasValue)
             {
@@ -150,7 +151,15 @@ namespace TravelAgencyProject.Controllers
             }
             ViewBag.CanLeaveReview = canLeaveReview;
 
+            // --- לוגיקת רשימת המתנה והרשאות הזמנה ---
 
+            // 1. נבדוק מי הראשון בתור לטיול הזה
+            var firstInWaitingList = await _context.WaitingLists
+                .Where(w => w.TripId == trip.TripId)
+                .OrderBy(w => w.RequestDate)
+                .FirstOrDefaultAsync();
+
+            // 2. נבדוק אם המשתמש המחובר הוא ברשימה
             var userEntry = userId.HasValue
                 ? await _context.WaitingLists.FirstOrDefaultAsync(w => w.TripId == trip.TripId && w.UserId == userId.Value)
                 : null;
@@ -162,12 +171,18 @@ namespace TravelAgencyProject.Controllers
 
                 ViewBag.IsInWaitingList = true;
                 ViewBag.PeopleAhead = peopleAhead;
-
                 ViewBag.EstimatedWaitDays = (peopleAhead + 1) * 2;
+
+                // --- החלק הקריטי: האם המשתמש הזה יכול להזמין עכשיו? ---
+                // הוא יכול להזמין רק אם: יש מלאי (Stock > 0) וגם הוא הראשון בתור (peopleAhead == 0)
+                ViewBag.CanBookNow = (trip.Stock > 0 && peopleAhead == 0);
             }
             else
             {
                 ViewBag.IsInWaitingList = false;
+                // משתמש חדש שלא ברשימה יכול להזמין רק אם אין רשימת המתנה בכלל ויש מלאי
+                bool hasWaitingList = await _context.WaitingLists.AnyAsync(w => w.TripId == trip.TripId);
+                ViewBag.CanBookNow = (!hasWaitingList && trip.Stock > 0);
             }
 
             ViewBag.HasWaitingList = await _context.WaitingLists.AnyAsync(w => w.TripId == trip.TripId);
