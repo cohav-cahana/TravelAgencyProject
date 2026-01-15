@@ -186,6 +186,7 @@
             <div class="col-lg-3 col-md-6">
                 <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Sort By</label>
                 <select name="sortBy" class="form-select bg-light border-0">
+                    <option value="" selected="@(string.IsNullOrEmpty(ViewData["CurrentSort"]?.ToString()))">All / Default Order</option>
                     <option value="date" selected="@(ViewData["CurrentSort"]?.ToString() == "date")">Travel Date</option>
                     <option value="price_asc" selected="@(ViewData["CurrentSort"]?.ToString() == "price_asc")">Price: Low to High</option>
                     <option value="price_desc" selected="@(ViewData["CurrentSort"]?.ToString() == "price_desc")">Price: High to Low</option>
