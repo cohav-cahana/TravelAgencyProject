@@ -18,7 +18,7 @@ namespace TravelAgencyProject.Controllers
             _webHostEnvironment = webHostEnvironment;
             _emailService = emailService;
         }
-        public IActionResult Index(string searchString, string category, string sortBy, bool onlySales)
+        public IActionResult Index(string searchString, string category, string sortBy, bool onlySales, DateTime? startDate, DateTime? endDate)
         {
             // Start with a query including Reviews for the popularity sort (average rating)
             var trips = _context.Trips.Include(t => t.Reviews).AsQueryable();
@@ -56,12 +56,25 @@ namespace TravelAgencyProject.Controllers
                 // Default sort: by start date (soonest first)
                 _ => trips.OrderBy(t => t.StartDate)
             };
+            // --- 5. DATE FILTERING ---
+            if (startDate.HasValue)
+            {
+                // Filter trips that start on or after the specified start date
+                trips = trips.Where(t => t.StartDate >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                // Filter trips that end on or before the specified end date
+                trips = trips.Where(t => t.EndDate <= endDate.Value);
+            }
 
-            // Keep data for the UI to remember what the user selected
-            ViewData["CurrentFilter"] = searchString;
+                // Keep data for the UI to remember what the user selected
+                ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentCategory"] = category;
             ViewData["CurrentSort"] = sortBy;
             ViewData["OnlySales"] = onlySales;
+            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
 
             return View(trips.ToList());
         }
