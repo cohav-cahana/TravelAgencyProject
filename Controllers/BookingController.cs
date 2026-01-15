@@ -130,10 +130,9 @@ namespace TravelAgencyProject.Controllers
             }
 
             // 3. Set a feedback message for the Admin to see how many emails were sent
-            TempData["AdminMessage"] = $"Success! {count} reminders were sent to travelers departing on {targetDate.ToString("dd/MM/yyyy")}.";
-
+            TempData["AdminMessage"] = $"Success! {count} reminders were sent...";
             // Redirect back to the Admin dashboard
-            return RedirectToAction("Index", "Admin");
+            return RedirectToAction("Index", "Home");
         }
     }
 }

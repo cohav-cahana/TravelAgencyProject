@@ -53,7 +53,7 @@ namespace TravelAgencyProject.Models
 
         [NotMapped] // we don't want to store it in the database.
         [Display(Name = "Upload Image")] // what will be shown in the form.
-        public IFormFile? ImageFile { get; set; } // the image file that the user uploads.
+        public IFormFile ImageFile { get; set; } // the image file that the user uploads.
 
         [Required(ErrorMessage = "The category is required")]
         public string Category { get; set; }

@@ -106,12 +106,14 @@ namespace TravelAgencyProject.Controllers
                 trip.ImageUrl = "/images/trips/" + fileName;
             }
 
+            else
+            {
+                ModelState.AddModelError("ImageFile", "Please upload an image. This is mandatory.");
+            }
 
-
-            ModelState.Remove("ImageUrl");// We will set it in the code below
             if (string.IsNullOrEmpty(trip.ImageUrl) && trip.ImageFile == null)
             {
-                //       ModelState.AddModelError("ImageFile", "Please upload an image.");
+                 ModelState.AddModelError("ImageFile", "Please upload an image.");
             }
             if (ModelState.IsValid)
             {
