@@ -148,7 +148,7 @@
     @* --- Tabs Content Sections --- *@
     <div class="tab-content" id="bookingTabContent">
 
-        @* 1. UPCOMING TRIPS SECTION *@
+        @*  UPCOMING TRIPS SECTION *@
         <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
             @if (!activeBookings.Any())
             {
@@ -206,6 +206,13 @@
                                                     class="btn btn-success rounded-pill btn-sm">
                                                 <i class="bi bi-file-earmark-pdf"></i> Receipt
                                             </button>
+
+                                            @* הוספת כפתור ה-Trip Plan (PDF) *@
+                                            <button onclick="downloadItineraryPDF('@item.Trip?.Destination', '@item.Trip?.StartDate.ToShortDateString()', '@item.Trip?.EndDate.ToShortDateString()')"
+                                                    class="btn btn-primary rounded-pill btn-sm">
+                                                <i class="bi bi-map"></i> Trip Plan (PDF)
+                                            </button>
+
                                             @if (canCancelVisually)
                                             {
                                                 <form asp-controller="Trips" asp-action="CancelBooking" asp-route-id="@item.BookingId" method="post" onsubmit="return confirm('Cancel this trip?');">
@@ -229,7 +236,7 @@
             }
         </div>
 
-        @* 2. TRAVEL HISTORY SECTION *@
+        @*  TRAVEL HISTORY SECTION *@
         <div class="tab-pane fade" id="history" role="tabpanel">
             @if (pastBookings != null && pastBookings.Any())
             {
@@ -259,7 +266,7 @@
             }
         </div>
 
-        @* 3. CANCELLED TRIPS SECTION *@
+        @* CANCELLED TRIPS SECTION *@
         <div class="tab-pane fade" id="cancelled" role="tabpanel">
             @if (cancelledBookings != null && cancelledBookings.Any())
             {
@@ -299,7 +306,6 @@
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
-        // PDF Receipt Generation
         function downloadBookingPDF(id, dest, country, date, people, price) {
             const element = document.createElement('div');
             element.innerHTML = `<div style="padding:40px; font-family:sans-serif;">
@@ -314,7 +320,52 @@
             html2pdf().from(element).save('Receipt_' + id + '.pdf');
         }
 
-        // Live Countdown Logic 
+        function downloadItineraryPDF(dest, startDate, endDate) {
+            const element = document.createElement('div');
+
+            let itinerary = [];
+            switch (dest) {
+                case "Paris":
+                    itinerary = ["Day 1: Arrival & Eiffel Tower at night", "Day 2: Louvre Museum and Seine River Cruise", "Day 3: Full day at Disneyland Paris", "Day 4: Montmartre district and departure"];
+                    break;
+                case "London":
+                    itinerary = ["Day 1: Big Ben, London Eye and Southbank walk", "Day 2: British Museum and Covent Garden", "Day 3: Shopping at Oxford Street and Regent Street", "Day 4: Buckingham Palace and Flight home"];
+                    break;
+                case "Tokyo":
+                    itinerary = ["Day 1: Shinjuku skyscrapers and nightlife", "Day 2: Tsukiji Fish Market and Ginza shopping", "Day 3: Harajuku fashion and Meiji Shrine", "Day 4: Akihabara tech town and departure"];
+                    break;
+                case "New York":
+                    itinerary = ["Day 1: Times Square and Top of the Rock view", "Day 2: Statue of Liberty and Financial District", "Day 3: Central Park bike ride and Museum mile", "Day 4: Brooklyn Bridge and High Line walk"];
+                    break;
+                case "Tel Aviv":
+                    itinerary = ["Day 1: Beach day and Gordon Pier", "Day 2: Carmel Market and Neve Tzedek walk", "Day 3: Old Jaffa port and Flea Market", "Day 4: Bauhaus architecture tour and departure"];
+                    break;
+                case "Rome":
+                    itinerary = ["Day 1: Colosseum and Roman Forum", "Day 2: Vatican City and St. Peter's Basilica", "Day 3: Trevi Fountain and Spanish Steps", "Day 4: Trastevere food tour and departure"];
+                    break;
+                case "Dubai":
+                    itinerary = ["Day 1: Burj Khalifa and Dubai Mall fountains", "Day 2: Desert Safari and traditional dinner", "Day 3: Palm Jumeirah and waterpark", "Day 4: Gold Souk and airport transfer"];
+                    break;
+                default:
+                    itinerary = ["Day 1: Arrival, hotel check-in and welcome dinner", "Day 2: Guided city tour covering major landmarks", "Day 3: Free day for local exploration and shopping", "Day 4: Last minute souvenirs and transfer to airport"];
+            }
+
+            let itineraryItems = itinerary.map(day =>
+                `<p style="padding: 10px; border-left: 5px solid #0d6efd; background: #f8f9fa; margin-bottom: 10px; font-size: 14px;">${day}</p>`
+            ).join('');
+
+            element.innerHTML = `
+                <div style="padding: 50px; background: white; font-family: sans-serif;">
+                    <h1 style="color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 10px;">Travel Plan: ${dest}</h1>
+                    <p><strong>Dates:</strong> ${startDate} - ${endDate}</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                    <h3 style="margin-bottom: 20px;">Itinerary</h3>
+                    ${itineraryItems}
+                </div>`;
+
+            html2pdf().from(element).save('Itinerary_' + dest + '.pdf');
+        }
+
         function updateCountdowns() {
             const now = new Date().getTime();
             document.querySelectorAll('.countdown-timer').forEach(timer => {
@@ -343,9 +394,8 @@
         }
 
         updateCountdowns();
-        setInterval(updateCountdowns, 60000); // Update every minute
+        setInterval(updateCountdowns, 60000);
 
-        // Auto-hide alerts after 5 seconds
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(a => {
