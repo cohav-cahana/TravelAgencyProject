@@ -3,12 +3,10 @@
 @{
     ViewData["Title"] = "Trip Details";
 
-    // שליפת הנתונים מה-ViewBag שהגדרנו ב-Controller
     bool hasWaitingList = ViewBag.HasWaitingList ?? false;
     bool isInWaitingList = ViewBag.IsInWaitingList ?? false;
     bool canLeaveReview = ViewBag.CanLeaveReview ?? false;
 
-    // זה המשתנה הקריטי: מאפשר להזמין רק אם יש מלאי וגם (אין רשימה או שהוא הראשון בה)
     bool canBookNow = ViewBag.CanBookNow ?? false;
 
     var itinerary = new List<string>();
@@ -110,10 +108,9 @@
                             {
                                 @if (canBookNow)
                                 {
-                                    <form asp-action="AddToCart" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@Model.TripId" />
-                                        <input type="hidden" name="goToCheckout" value="true" />
+                                    <form asp-action="DirectPurchase" asp-controller="Booking" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="tripId" value="@Model.TripId" />                                        <input type="hidden" name="goToCheckout" value="true" />
                                         <button type="submit" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold">
                                             ✈️ BOOK NOW
                                         </button>
@@ -168,7 +165,6 @@
     <div class="mt-5 pt-4">
         <h3 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2 text-primary"></i>Customer Reviews</h3>
 
-        @* הוספת טופס ביקורת - מותנה בזה ש canLeaveReview הוא true *@
         @if (canLeaveReview)
         {
             <div class="card shadow-sm border-0 rounded-4 p-4 mb-5 bg-light">

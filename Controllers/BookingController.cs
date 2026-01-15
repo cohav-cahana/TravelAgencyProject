@@ -3,20 +3,21 @@ using Microsoft.EntityFrameworkCore;
 using TravelAgencyProject.Data;
 using TravelAgencyProject.Models;
 using TravelAgencyProject.Services;
+using Microsoft.AspNetCore.Http;
+using TravelAgencyProject.Extensions;
 
 namespace TravelAgencyProject.Controllers
 {
     public class BookingController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly EmailService _emailService; // 1. Add the email service
+        private readonly EmailService _emailService;
 
         public BookingController(AppDbContext context, EmailService emailService)
         {
             _context = context;
-            _emailService = emailService; // 2. Initialize the email service
+            _emailService = emailService;
         }
-
         public async Task<IActionResult> Index()
         {
             // --- Authentication Check ---
@@ -35,22 +36,79 @@ namespace TravelAgencyProject.Controllers
                 .OrderByDescending(b => b.Trip.StartDate)
                 .ToListAsync();
 
-            // Separate Cancelled Bookings first ---
-            // We take all bookings where status is Cancelled
+            // Filter Cancelled Bookings
             var cancelledBookings = allBookings.Where(b => b.bookingStatus == TripStatus.Cancelled).ToList();
 
-            // Now filter the REMAINING bookings (not cancelled) by date
+            // Filter Active Bookings (Not Cancelled)
             var activeBookings = allBookings.Where(b => b.bookingStatus != TripStatus.Cancelled);
 
+            // Split into Upcoming and Past based on the current date
             var upcomingBookings = activeBookings.Where(b => b.Trip.StartDate >= DateTime.Today).ToList();
             var pastBookings = activeBookings.Where(b => b.Trip.StartDate < DateTime.Today).ToList();
 
-            // --- Passing data to the View ---
+            // Pass data to the View using ViewBag
             ViewBag.PastBookings = pastBookings;
-            ViewBag.CancelledBookings = cancelledBookings; // Adding the cancelled trips to ViewBag
+            ViewBag.CancelledBookings = cancelledBookings;
 
-            return View(upcomingBookings); 
+            return View(upcomingBookings);
         }
+
+        /// <summary>
+        /// Direct Purchase Logic: Triggered when "BOOK NOW" is clicked.
+        /// Bypasses the cart by setting a special flag in the Session.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DirectPurchase(int tripId)
+        {
+            // Set a flag and store the Trip ID to indicate this is a single-item purchase
+            HttpContext.Session.SetString("IsDirectPurchase", "true");
+            HttpContext.Session.SetInt32("DirectTripId", tripId);
+
+            // Redirect directly to the checkout page
+            return RedirectToAction(nameof(CartCheckout));
+        }
+
+        /// <summary>
+        /// Displays the Checkout page. 
+        /// Decides whether to show the whole cart or just a single "Book Now" trip.
+        /// </summary>
+        public IActionResult CartCheckout()
+        {
+            // Authentication Check
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Check if the user arrived via the "BOOK NOW" direct path
+            var isDirect = HttpContext.Session.GetString("IsDirectPurchase");
+            if (isDirect == "true")
+            {
+                int? tripId = HttpContext.Session.GetInt32("DirectTripId");
+                var trip = _context.Trips.FirstOrDefault(t => t.TripId == tripId);
+
+                if (trip != null)
+                {
+                    // Return a list containing ONLY the selected trip, ignoring the existing cart
+                    return View(new List<Trip> { trip });
+                }
+            }
+
+            // Regular Cart Logic: Load items stored in the cart session
+            var cart = HttpContext.Session.GetComplexObject<List<Trip>>("Cart") ?? new List<Trip>();
+
+            if (!cart.Any())
+            {
+                return RedirectToAction("Index", "Trips");
+            }
+
+            return View(cart);
+        }
+
+        /// <summary>
+        /// Admin View: Displays the global waiting list for all trips.
+        /// </summary>
         public async Task<IActionResult> AdminWaitingList()
         {
             if (HttpContext.Session.GetString("IsAdmin") != "true")
@@ -61,15 +119,18 @@ namespace TravelAgencyProject.Controllers
             var list = await _context.WaitingLists
                 .Include(w => w.User)
                 .Include(w => w.Trip)
-                .OrderBy(w => w.RequestDate) // FIFO
+                .OrderBy(w => w.RequestDate) // First-In-First-Out (FIFO)
                 .ToListAsync();
 
             return View("~/Views/Admin/WaitingList.cshtml", list);
         }
+
+        /// <summary>
+        /// Admin Action: Manually notifies a user via email that a spot has opened up.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> NotifyUser(int id)
         {
-            // Find the entry and include the User and Trip details to get the email and destination
             var entry = await _context.WaitingLists
                 .Include(w => w.User)
                 .Include(w => w.Trip)
@@ -77,7 +138,7 @@ namespace TravelAgencyProject.Controllers
 
             if (entry != null)
             {
-                // 3. Send the email manually now because the Admin clicked the button
+                // Send notification email
                 await _emailService.SendEmailAsync(entry.User.Email, "Room Available!",
                     $"Hi {entry.User.FirstName}, a room is now available for {entry.Trip.Destination}. You can now proceed with your booking.");
 
@@ -88,6 +149,9 @@ namespace TravelAgencyProject.Controllers
             return RedirectToAction(nameof(AdminWaitingList));
         }
 
+        /// <summary>
+        /// Admin Action: Removes a user from the waiting list.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> RemoveFromWaitingList(int id)
         {
@@ -100,15 +164,17 @@ namespace TravelAgencyProject.Controllers
             }
             return RedirectToAction(nameof(AdminWaitingList));
         }
+
+        /// <summary>
+        /// Admin Action: Sends automatic reminders to users whose trips start in exactly 5 days.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> SendReminders()
         {
-            // 1. Calculate the target date (exactly 5 days from today)
+            // Calculate target date (5 days from today)
             var targetDate = DateTime.Today.AddDays(5);
 
-            // 2. Fetch all bookings from the database that start on the target date.
-            // We use 'Include' to load the User details (for the email) and Trip details (for the destination).
-            // We only filter for 'Upcoming' bookings to avoid sending reminders for cancelled ones.
+            // Fetch upcoming bookings starting on the target date
             var bookingsToRemind = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Trip)
@@ -117,7 +183,7 @@ namespace TravelAgencyProject.Controllers
 
             int count = 0;
 
-            // Loop through each booking and send a personalized reminder email
+            // Loop and send personalized emails
             foreach (var booking in bookingsToRemind)
             {
                 if (booking.User != null && !string.IsNullOrEmpty(booking.User.Email))
@@ -129,9 +195,7 @@ namespace TravelAgencyProject.Controllers
                 }
             }
 
-            // 3. Set a feedback message for the Admin to see how many emails were sent
-            TempData["AdminMessage"] = $"Success! {count} reminders were sent...";
-            // Redirect back to the Admin dashboard
+            TempData["AdminMessage"] = $"Success! {count} reminders were sent.";
             return RedirectToAction("Index", "Home");
         }
     }
