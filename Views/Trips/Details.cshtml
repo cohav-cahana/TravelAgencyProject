@@ -108,10 +108,8 @@
                             }
                             else
                             {
-                                @* לוגיקת כפתור הזמנה חכמה *@
                                 @if (canBookNow)
                                 {
-                                    @* יוצג רק למי שראשון בתור (או כשאין תור) ויש מלאי *@
                                     <form asp-action="AddToCart" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@Model.TripId" />
@@ -123,7 +121,6 @@
                                 }
                                 else if (isInWaitingList)
                                 {
-                                    @* יוצג למי שברשימת המתנה אבל עוד לא הגיע תורו או שאין חדר *@
                                     <div class="d-flex flex-column w-100">
                                         <div class="alert alert-warning rounded-4 shadow-sm mb-2 p-3">
                                             <div class="fw-bold"><i class="bi bi-hourglass-split me-2"></i>You are on the waiting list</div>
@@ -136,7 +133,6 @@
                                 }
                                 else if (Model.Stock <= 0 || hasWaitingList)
                                 {
-                                    @* יוצג למשתמש חדש כשאין מקום או שיש תור לפניו *@
                                     <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline w-100">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="tripId" value="@Model.TripId" />
@@ -153,7 +149,6 @@
                         </button>
                     </div>
 
-                    @* תוכן מוסתר ל-PDF *@
                     <div id="itinerary-content" style="display: none; background: white; padding: 50px;">
                         <h1 style="color: #0d6efd;">Travel Plan: @Model.Destination</h1>
                         <p><strong>Dates:</strong> @Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
@@ -172,6 +167,37 @@
     @* Reviews Section *@
     <div class="mt-5 pt-4">
         <h3 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2 text-primary"></i>Customer Reviews</h3>
+
+        @* הוספת טופס ביקורת - מותנה בזה ש canLeaveReview הוא true *@
+        @if (canLeaveReview)
+        {
+            <div class="card shadow-sm border-0 rounded-4 p-4 mb-5 bg-light">
+                <h5 class="fw-bold mb-3">Add a Review</h5>
+                <form asp-controller="Reviews" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="TripId" value="@Model.TripId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rating</label>
+                        <select name="Rating" class="form-select border-0 shadow-sm rounded-pill">
+                            <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
+                            <option value="4">⭐⭐⭐⭐ (Good)</option>
+                            <option value="3">⭐⭐⭐ (Average)</option>
+                            <option value="2">⭐⭐ (Poor)</option>
+                            <option value="1">⭐ (Terrible)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Your Comment</label>
+                        <textarea name="Comment" class="form-control border-0 shadow-sm rounded-4" rows="3" placeholder="Share your experience..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Submit Review</button>
+                </form>
+            </div>
+        }
+
         @if (Model.Reviews != null && Model.Reviews.Any())
         {
             @foreach (var review in Model.Reviews.OrderByDescending(r => r.PostedDate))
