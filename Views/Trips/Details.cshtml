@@ -6,7 +6,6 @@
     bool hasWaitingList = ViewBag.HasWaitingList ?? false;
     bool isInWaitingList = ViewBag.IsInWaitingList ?? false;
     bool canLeaveReview = ViewBag.CanLeaveReview ?? false;
-
     bool canBookNow = ViewBag.CanBookNow ?? false;
 
     var itinerary = new List<string>();
@@ -88,11 +87,45 @@
                     <div class="row">
                         <div class="col-6">
                             <h6 class="text-uppercase text-muted fw-bold small">📅 Dates</h6>
-                            <p class="fs-5">@Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
+                            <p class="fs-5 mb-0">@Model.StartDate.ToShortDateString() - @Model.EndDate.ToShortDateString()</p>
                         </div>
                         <div class="col-6 text-end">
                             <h6 class="text-uppercase text-muted fw-bold small">💰 Price</h6>
-                            <p class="h3 text-success fw-bold">$@Model.Price</p>
+                            <p class="h3 text-success fw-bold mb-0">$@(Model.SalePrice ?? Model.Price)</p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <h6 class="text-uppercase text-muted fw-bold small">🏨 Availability</h6>
+                            @if (hasWaitingList && Model.Stock > 0)
+                            {
+                                <p class="fs-5 text-warning fw-bold mb-0">Reserved for Queue</p>
+                                <small class="text-muted">(@Model.Stock room available for next in line)</small>
+                            }
+                            else if (Model.Stock <= 0)
+                            {
+                                <p class="fs-5 text-danger fw-bold mb-0">Sold Out</p>
+                            }
+                            else
+                            {
+                                <p class="fs-5 mb-0 @(Model.Stock <= 2 ? "text-danger fw-bold" : "")">
+                                    @Model.Stock @(Model.Stock == 1 ? "Room" : "Rooms") Left
+                                </p>
+                            }
+                        </div>
+                        <div class="col-6 text-end">
+                            <h6 class="text-uppercase text-muted fw-bold small">🔞 Restriction</h6>
+                            <p class="fs-5 fw-bold mb-0 text-dark">
+                                @if (Model.AgeLimitaion.HasValue && Model.AgeLimitaion.Value > 0)
+                                {
+                                    @:Age Limit @Model.AgeLimitaion
+                                }
+                                else
+                                {
+                                    @:No Age Limit
+                                }
+                            </p>
                         </div>
                     </div>
 
@@ -109,8 +142,8 @@
                                 @if (canBookNow)
                                 {
                                     <form asp-action="DirectPurchase" asp-controller="Booking" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="tripId" value="@Model.TripId" />                                        <input type="hidden" name="goToCheckout" value="true" />
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="tripId" value="@Model.TripId" />
                                         <button type="submit" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold">
                                             ✈️ BOOK NOW
                                         </button>
@@ -130,7 +163,7 @@
                                 }
                                 else if (Model.Stock <= 0 || hasWaitingList)
                                 {
-                                    <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline w-100">
+                                    <form asp-action="JoinWaitingList" asp-controller="Booking" method="post" class="d-inline w-100">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="tripId" value="@Model.TripId" />
                                         <button type="submit" class="btn btn-warning btn-lg shadow rounded-pill px-4 fw-bold w-100">
