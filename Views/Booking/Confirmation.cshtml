@@ -1,16 +1,15 @@
 ﻿@model TravelAgencyProject.Models.Booking
 
 <div class="container mt-5 text-center">
-    <div class="card shadow p-5" id="confirmation-content">
+    <div class="card shadow p-5" id="confirmation-content" style="background: white; min-width: 800px; color: black;">
         <h1 class="display-4 text-success">Booking Confirmed!</h1>
         <p class="lead">Thank you for booking with us. Your reservation is complete.</p>
         <hr />
+
         <div class="row text-start justify-content-center">
             <div class="col-md-6">
                 <h4>Reservation Summary</h4>
-                <p><strong>Order ID:</strong> #@Model.BookingId</p>
-                <p><strong>Destination:</strong> @Model.Trip?.Destination</p>
-                <p><strong>Travelers:</strong> @Model.PeopleCount</p>
+                <p><strong>Order ID:</strong> #@(ViewBag.PayPalOrderId ?? Model.BookingId.ToString())</p>
                 <p><strong>Total Paid:</strong> $@Model.TotalPrice</p>
                 <p><strong>Date:</strong> @Model.BookingDate.ToShortDateString()</p>
             </div>
@@ -19,11 +18,11 @@
 
     <div class="mt-4 d-flex justify-content-center gap-3">
         <a asp-action="Index" asp-controller="Trips" class="btn btn-outline-primary btn-lg">Back to Trips</a>
-
         <button id="download-pdf" class="btn btn-success btn-lg shadow">
             <i class="bi bi-file-earmark-pdf"></i> Download PDF Receipt
         </button>
     </div>
+
     <div class="text-center mt-5">
         <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
             Back to Home Page
@@ -34,48 +33,53 @@
 <div class="card mt-5 border-0 shadow-sm bg-light text-center">
     <div class="card-body p-5">
         <h3 class="fw-bold">How was our booking service?</h3>
-        <p class="text-muted mb-4">We would love to hear about your experience with our platform.</p>
-
         <form asp-controller="Reviews" asp-action="Create" method="post">
-            @* Return tracking parameter to redirect user back to Home page after submission *@
             <input type="hidden" name="returnTo" value="Home" />
-
-            @* Note: No TripId is provided here, which defines this as a "Service Review" in the DB *@
-
             <div class="mb-3">
-                <label class="form-label d-block fw-bold">Your Rating:</label>
                 <select name="Rating" class="form-select w-25 mx-auto border-primary" required>
-                    <option value="5">★★★★★ 5 Stars - Excellent</option>
-                    <option value="4">★★★★ 4 Stars - Very Good</option>
-                    <option value="3">★★★ 3 Stars - Good</option>
-                    <option value="2">★★ 2 Stars - Fair</option>
-                    <option value="1">★ 1 Star - Poor</option>
+                    <option value="5">★★★★★ 5 Stars</option>
+                    <option value="4">★★★★ 4 Stars</option>
+                    <option value="3">★★★ 3 Stars</option>
                 </select>
             </div>
-
             <div class="mb-4">
-                <textarea name="Comment" class="form-control shadow-sm" rows="3" placeholder="Tell us what you think..." required></textarea>
+                <textarea name="Comment" class="form-control" rows="3" placeholder="Tell us what you think..." required></textarea>
             </div>
-
-            <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill">Submit Service Feedback</button>
+            <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill">Submit Feedback</button>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
     <script>
         document.getElementById('download-pdf').addEventListener('click', function () {
-            const element = document.getElementById('confirmation-content');
-            const options = {
-                margin: 10,
-                filename: 'Booking_Confirmation_@Model.BookingId' + '.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            var docDefinition = {
+                content: [
+                    { text: 'BOOKING CONFIRMATION', style: 'header', alignment: 'center' },
+                    { text: 'Thank you for your reservation!', alignment: 'center', margin: [0, 0, 0, 20] },
+                    {
+                        table: {
+                            widths: ['*', '*'],
+                            body: [
+                                [{ text: 'Order Summary', colSpan: 2, style: 'tableHeader' }, {}],
+                                ['Order ID:', '#@Model.BookingId'],
+                                ['Total Paid:', '$@Model.TotalPrice'],
+                                ['Date:', '@Model.BookingDate.ToShortDateString()'],
+                                ['Status:', 'CONFIRMED']
+                            ]
+                        }
+                    }
+                ],
+                styles: {
+                    header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
+                    tableHeader: { bold: true, fontSize: 13, color: 'white', fillOpacity: 1, fillColor: '#198754', margin: [0, 5] }
+                }
             };
-            
-            html2pdf().set(options).from(element).save();
+            pdfMake.createPdf(docDefinition).download('Booking_Confirmation_@Model.BookingId' + '.pdf');
         });
     </script>
+
 }

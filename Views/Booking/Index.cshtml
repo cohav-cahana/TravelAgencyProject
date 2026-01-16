@@ -309,86 +309,95 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
     <script>
-        // PDF Generation for Receipts
         function downloadBookingPDF(id, dest, country, date, people, price) {
-            const element = document.createElement('div');
-            element.innerHTML = `<div style="padding:40px; font-family:sans-serif;">
-                                    <h1 style="color:#0066ff;">Booking Receipt</h1>
-                                    <hr/>
-                                    <h3>Order ID: #${id}</h3>
-                                    <p><strong>Destination:</strong> ${dest}, ${country}</p>
-                                    <p><strong>Date:</strong> ${date}</p>
-                                    <p><strong>Travelers:</strong> ${people}</p>
-                                    <h2 style="margin-top:20px;">Total Paid: $${price}</h2>
-                                 </div>`;
-            html2pdf().from(element).save('Receipt_' + id + '.pdf');
+            var docDefinition = {
+                content: [
+                    { text: 'TRAVEL AGENCY - BOOKING RECEIPT', style: 'header' },
+                    { text: 'Order ID: #' + id, style: 'subheader' },
+                    { text: '__________________________________________________________', margin: [0, 0, 0, 20] },
+                    {
+                        columns: [
+                            { text: 'Destination:', bold: true, width: 100 },
+                            { text: dest + ', ' + country }
+                        ], margin: [0, 5]
+                    },
+                    {
+                        columns: [
+                            { text: 'Date:', bold: true, width: 100 },
+                            { text: date }
+                        ], margin: [0, 5]
+                    },
+                    {
+                        columns: [
+                            { text: 'Travelers:', bold: true, width: 100 },
+                            { text: people }
+                        ], margin: [0, 5]
+                    },
+                    { text: ' ', margin: [0, 20] },
+                    {
+                        table: {
+                            widths: ['*', 'auto'],
+                            body: [
+                                [{ text: 'Description', bold: true }, { text: 'Amount', bold: true }],
+                                ['Travel Package for ' + people + ' person(s)', '$' + price]
+                            ]
+                        }
+                    },
+                    { text: 'Total Paid: $' + price, style: 'total', margin: [0, 20] },
+                    { text: 'Thank you for booking with us!', alignment: 'center', italic: true, margin: [0, 50] }
+                ],
+                styles: {
+                    header: { fontSize: 22, bold: true, color: '#0066ff', margin: [0, 0, 0, 10] },
+                    subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
+                    total: { fontSize: 18, bold: true, alignment: 'right' }
+                }
+            };
+
+            pdfMake.createPdf(docDefinition).download('Receipt_' + id + '.pdf');
         }
 
-        // PDF Generation for Itineraries
         function downloadItineraryPDF(dest, startDate, endDate) {
-            const element = document.createElement('div');
-            let itinerary = [];
-
-            // Itinerary logic based on destination
-            switch (dest) {
-                case "Paris": itinerary = ["Day 1: Arrival & Eiffel Tower", "Day 2: Louvre Museum", "Day 3: Disneyland Paris", "Day 4: Departure"]; break;
-                case "London": itinerary = ["Day 1: Big Ben", "Day 2: British Museum", "Day 3: Oxford Street", "Day 4: Departure"]; break;
-                default: itinerary = ["Day 1: Arrival", "Day 2: City Tour", "Day 3: Free Exploration", "Day 4: Departure"];
-            }
-
-            let itineraryItems = itinerary.map(day =>
-                `<p style="padding: 10px; border-left: 5px solid #0d6efd; background: #f8f9fa; margin-bottom: 10px;">${day}</p>`
-            ).join('');
-
-            element.innerHTML = `
-                <div style="padding: 50px; background: white; font-family: sans-serif;">
-                    <h1 style="color: #0d6efd; border-bottom: 2px solid #0d6efd;">Travel Plan: ${dest}</h1>
-                    <p><strong>Dates:</strong> ${startDate} - ${endDate}</p>
-                    <hr/>
-                    <h3>Itinerary</h3>
-                    ${itineraryItems}
-                </div>`;
-
-            html2pdf().from(element).save('Itinerary_' + dest + '.pdf');
+            var docDefinition = {
+                content: [
+                    { text: 'TRAVEL PLAN: ' + dest.toUpperCase(), style: 'header' },
+                    { text: 'Dates: ' + startDate + ' - ' + endDate, margin: [0, 0, 0, 20] },
+                    { text: 'DAILY ITINERARY', style: 'subheader' },
+                    {
+                        ul: [
+                            { text: 'Day 1: Arrival & Hotel Check-in', margin: [0, 5] },
+                            { text: 'Day 2: Guided City Tour & Local Landmarks', margin: [0, 5] },
+                            { text: 'Day 3: Full Day of Leisure & Exploration', margin: [0, 5] },
+                            { text: 'Day 4: Departure Preparation & Flight Home', margin: [0, 5] }
+                        ]
+                    },
+                    { text: 'Important: Please arrive at the airport 3 hours before departure.', color: 'red', margin: [0, 30] }
+                ],
+                styles: {
+                    header: { fontSize: 24, bold: true, color: '#0d6efd' },
+                    subheader: { fontSize: 16, bold: true, margin: [0, 15, 0, 10] }
+                }
+            };
+            pdfMake.createPdf(docDefinition).download('Itinerary_' + dest + '.pdf');
         }
 
-        // Countdown Timer Logic
         function updateCountdowns() {
             const now = new Date().getTime();
             document.querySelectorAll('.countdown-timer').forEach(timer => {
                 const startDateStr = timer.getAttribute('data-startdate');
                 if (!startDateStr) return;
-
                 const startDate = new Date(startDateStr).getTime();
-                const limitHours = parseInt(timer.getAttribute('data-limit'));
                 const distance = startDate - now;
-
-                if (distance < 0) {
-                    timer.innerHTML = "Trip in progress!";
-                    timer.className = "countdown-timer fw-bold text-success";
-                    return;
-                }
-
-                if (distance < (limitHours * 3600000)) {
-                    timer.classList.add('text-danger', 'animate-pulse');
-                }
-
+                if (distance < 0) { timer.innerHTML = "Trip in progress!"; return; }
                 const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                timer.innerHTML = `${days}d ${hours}h ${minutes}m`;
+                timer.innerHTML = days + "d " + hours + "h left";
             });
         }
-
-        // Initialize and run interval
         updateCountdowns();
         setInterval(updateCountdowns, 60000);
-
-        // Auto-fade alerts
-        setTimeout(() => {
-            $('.alert').fadeOut('slow');
-        }, 5000);
     </script>
 }

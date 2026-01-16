@@ -221,13 +221,40 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
     <script>
         document.getElementById('download-itinerary').addEventListener('click', function () {
-            const btn = this;
-            const element = document.getElementById('itinerary-content');
-            element.style.display = 'block';
-            html2pdf().from(element).save().then(() => { element.style.display = 'none'; });
+            const itineraryData = @Html.Raw(Json.Serialize(itinerary));
+
+            const docDefinition = {
+                content: [
+                    { text: 'TRAVEL PLAN: ' + '@Model.Destination'.toUpperCase(), style: 'header' },
+                    { text: 'Country: ' + '@Model.Country', style: 'subheader' },
+                    { text: 'Dates: ' + '@Model.StartDate.ToShortDateString()' + ' - ' + '@Model.EndDate.ToShortDateString()', margin: [0, 0, 0, 20] },
+                    { text: '__________________________________________________________', margin: [0, 0, 0, 20] },
+                    { text: 'DETAILED ITINERARY', style: 'subheader', margin: [0, 10, 0, 10] },
+                    {
+                        stack: itineraryData.map(day => ({
+                            text: day,
+                            margin: [0, 5, 0, 5],
+                            padding: [10, 10],
+                            background: '#f8f9fa'
+                        }))
+                    },
+                    { text: '\n\nEnjoy your trip with Travel Agency!', alignment: 'center', italic: true, color: '#888888' }
+                ],
+                styles: {
+                    header: { fontSize: 24, bold: true, color: '#0d6efd', margin: [0, 0, 0, 5] },
+                    subheader: { fontSize: 16, bold: true, color: '#333333', margin: [0, 5, 0, 5] }
+                },
+                defaultStyle: {
+                    font: 'Roboto'
+                }
+            };
+
+            pdfMake.createPdf(docDefinition).download('Itinerary_@Model.Destination' + '.pdf');
         });
     </script>
 }

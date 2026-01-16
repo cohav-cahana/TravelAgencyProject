@@ -24,10 +24,13 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.Name = ".TravelAgency.Session.v2"; // Custom session cookie name
+    options.Cookie.SameSite = (SameSiteMode)(-1);
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 // Register our new services
-builder.Services.AddSingleton<EmailService>();
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())

@@ -14,28 +14,47 @@ namespace TravelAgencyProject.Controllers
         {
             return View();
         }
-        //POST: /Account/Login
+        // POST: /Account/Login
         [HttpPost]
         public IActionResult Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
-            { //Looking for user in the database
+            {
+                // 1. if there is an existing cart in session, save it temporarily
+                var existingCart = HttpContext.Session.GetString("Cart");
+
+                // 2. look for the user in the database
                 var user = _context.Users.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
-                if (user != null) // User found, so we save his info in session
+
+                if (user != null)
                 {
+                    // 3. user found, set session variables
                     HttpContext.Session.SetString("UserId", user.UserId.ToString());
                     HttpContext.Session.SetString("Email", user.Email);
                     HttpContext.Session.SetString("FirstName", user.FirstName);
-                    if (user.IsAdmin) // If the user is admin, we save that info in session too
+
+                    if (user.IsAdmin)
                     {
                         HttpContext.Session.SetString("IsAdmin", "true");
                     }
+
+                    // 4. restore the existing cart back to session
+                    if (!string.IsNullOrEmpty(existingCart))
+                    {
+                        HttpContext.Session.SetString("Cart", existingCart);
+                    }
+
+                    // 5. 
                     return RedirectToAction("Index", "Home");
                 }
+
+                // if we reach here, login failed
                 ModelState.AddModelError("", "Invalid email or password");
             }
+
             return View(model);
         }
+
         public IActionResult Logout()
         {
             HttpContext.Session.Clear(); // Delete all session data
