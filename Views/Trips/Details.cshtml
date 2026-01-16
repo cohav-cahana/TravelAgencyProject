@@ -151,10 +151,31 @@
                                 }
                                 else if (isInWaitingList)
                                 {
+                                    int peopleAhead = ViewBag.PeopleAhead ?? 0;
+                                    int estimatedWaitDays = peopleAhead * 2;
+
                                     <div class="d-flex flex-column w-100">
-                                        <div class="alert alert-warning rounded-4 shadow-sm mb-2 p-3">
-                                            <div class="fw-bold"><i class="bi bi-hourglass-split me-2"></i>You are on the waiting list</div>
-                                            <div class="small">People ahead: <strong>@ViewBag.PeopleAhead</strong></div>
+                                        <div class="alert alert-warning rounded-4 shadow-sm mb-2 p-3 border-start border-4 border-warning">
+                                            <div class="fw-bold text-dark">
+                                                <i class="bi bi-hourglass-split me-2"></i>You are on the waiting list
+                                            </div>
+                                            <div class="small mt-1">
+                                                People ahead: <strong>@peopleAhead</strong>
+                                            </div>
+                                            @if (peopleAhead > 0)
+                                            {
+                                                <div class="small mt-1 text-dark">
+                                                    <i class="bi bi-clock-history me-1"></i>
+                                                    Estimated wait time: <strong class="text-primary">@estimatedWaitDays days</strong>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="small mt-1 text-success fw-bold">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>
+                                                    You are next in line!
+                                                </div>
+                                            }
                                         </div>
                                         <button class="btn btn-secondary btn-lg shadow rounded-pill px-4 fw-bold" disabled>
                                             ✅ Position Reserved
