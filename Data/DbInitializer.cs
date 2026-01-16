@@ -17,7 +17,7 @@ namespace TravelAgencyProject.Data
                 var users = new User[]
                 {
                     new User { FirstName="Admin", LastName="Master", Email="admin@gmail.com", Password="tjrhfkvabho", IsAdmin=true },
-                    new User { FirstName="Maria", LastName="badarne", Email="user@gmail.com", Password="1234", IsAdmin=false }
+                    new User { FirstName="Maria", LastName="badarne", Email="Maria123@gmail.com", Password="Cgzr,vao12!", IsAdmin=false }
                 };
                 context.Users.AddRange(users);
                 context.SaveChanges();
