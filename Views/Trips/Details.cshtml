@@ -163,7 +163,7 @@
                                 }
                                 else if (Model.Stock <= 0 || hasWaitingList)
                                 {
-                                    <form asp-action="JoinWaitingList" asp-controller="Booking" method="post" class="d-inline w-100">
+                                    <form asp-action="JoinWaitingList" asp-controller="Trips" method="post" class="d-inline w-100">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="tripId" value="@Model.TripId" />
                                         <button type="submit" class="btn btn-warning btn-lg shadow rounded-pill px-4 fw-bold w-100">

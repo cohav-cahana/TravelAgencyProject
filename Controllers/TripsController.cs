@@ -534,13 +534,14 @@ namespace TravelAgencyProject.Controllers
             if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account");
 
             int userId = int.Parse(userIdString);
-            if (await _context.WaitingLists.AnyAsync(w => w.TripId == tripId && w.UserId == userId)) return RedirectToAction("CartCheckout");
+            if (await _context.WaitingLists.AnyAsync(w => w.TripId == tripId && w.UserId == userId))
+                return RedirectToAction("Details", new { id = tripId });
 
             _context.WaitingLists.Add(new WaitingList { TripId = tripId, UserId = userId, RequestDate = DateTime.Now });
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Successfully added to the waiting list.";
-            return RedirectToAction("CartCheckout");
+            return RedirectToAction("Details", new { id = tripId });
         }
     }
 }
