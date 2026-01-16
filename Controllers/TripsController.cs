@@ -319,6 +319,25 @@ namespace TravelAgencyProject.Controllers
                 var trips = await _context.Trips.Where(t => tripIdList.Contains(t.TripId)).ToListAsync();
                 return View("~/Views/Booking/CartCheckout.cshtml", trips);
             }
+            if (!string.IsNullOrEmpty(expiryDate))
+            {
+                var parts = expiryDate.Split('/');
+                if (parts.Length == 2 && int.TryParse(parts[0], out int month) && int.TryParse(parts[1], out int year))
+                {
+                    // convert 2-digit year to 4-digit year
+                    int fullYear = 2000 + year;
+
+                    // Create a date for the last day of the expiry month
+                    var lastDayOfExpiry = new DateTime(fullYear, month, 1).AddMonths(1).AddDays(-1);
+
+                    // Check if the card is expired
+                    if (lastDayOfExpiry < DateTime.Today)
+                    {
+                        TempData["Error"] = "Credit card has expired.";
+                        return RedirectToAction("CartCheckout", "Booking");
+                    }
+                }
+            }
 
             int userId = int.Parse(userIdString);
             decimal totalOrderPrice = 0;
