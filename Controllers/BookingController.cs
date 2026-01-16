@@ -75,13 +75,13 @@ namespace TravelAgencyProject.Controllers
         /// </summary>
         public IActionResult CartCheckout()
         {
-            // Authentication Check
+            // 1. Authentication Check: Ensure the user is logged in
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            // Check if the user arrived via the "BOOK NOW" direct path
+            // 2. Direct Purchase Logic: Check if the user clicked "BOOK NOW" for a specific trip
             var isDirect = HttpContext.Session.GetString("IsDirectPurchase");
             if (isDirect == "true")
             {
@@ -90,20 +90,35 @@ namespace TravelAgencyProject.Controllers
 
                 if (trip != null)
                 {
-                    // Return a list containing ONLY the selected trip, ignoring the existing cart
+                    // Return only the specific trip for direct checkout
                     return View(new List<Trip> { trip });
                 }
             }
 
-            // Regular Cart Logic: Load items stored in the cart session
-            var cart = HttpContext.Session.GetComplexObject<List<Trip>>("Cart") ?? new List<Trip>();
+            // 3. Regular Cart Logic: Load the list of IDs from the Session
+            var cartJson = HttpContext.Session.GetString("Cart");
 
-            if (!cart.Any())
+            if (string.IsNullOrEmpty(cartJson))
+            {
+                // If the cart is empty, redirect back to the trips gallery
+                return RedirectToAction("Index", "Trips");
+            }
+
+            // 4. Deserialize: Convert the JSON string back into a List of Integers (IDs)
+            // This part is crucial for PayPal and session consistency
+            List<int> tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson) ?? new List<int>();
+
+            // 5. Database Sync: Fetch the actual Trip objects from the DB using the IDs
+            var tripsInCart = _context.Trips.Where(t => tripIds.Contains(t.TripId)).ToList();
+
+            // 6. Final Check: If no trips were found in the DB, go back to Index
+            if (!tripsInCart.Any())
             {
                 return RedirectToAction("Index", "Trips");
             }
 
-            return View(cart);
+            // Return the list of Trip objects to the View for display
+            return View(tripsInCart);
         }
 
         /// <summary>

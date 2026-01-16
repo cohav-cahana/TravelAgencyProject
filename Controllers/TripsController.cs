@@ -256,6 +256,25 @@ namespace TravelAgencyProject.Controllers
 
             return goToCheckout || directPurchase ? RedirectToAction("CartCheckout") : RedirectToAction("Index");
         }
+        [HttpGet]
+        public IActionResult GetCartSummary()
+        {
+            // 1. Get IDs from Session
+            var cartJson = HttpContext.Session.GetString("Cart");
+            if (string.IsNullOrEmpty(cartJson))
+            {
+                return PartialView("_CartSummaryPartial", new List<Trip>());
+            }
+
+            // 2. Convert JSON to List of IDs
+            var tripIds = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cartJson);
+
+            // 3. Fetch Trip objects from DB
+            var trips = _context.Trips.Where(t => tripIds.Contains(t.TripId)).ToList();
+
+            // 4. Return the Partial View (The UI for the modal)
+            return PartialView("_CartSummaryPartial", trips);
+        }
 
         [HttpPost]
         public IActionResult RemoveFromCart(int id)
